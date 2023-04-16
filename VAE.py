@@ -121,6 +121,8 @@ class VAE(nn.Module):
         regularizers = []
         for epoch in tqdm(range(epochs)):
             for i in tqdm(range(0, self.data_length, batch_size)):
+                batch_size = min(i+batch_size, self.data_length - i)
+
                 x = X[i:i+batch_size].to(device)
                 optimizer.zero_grad()
                 elbo, reconstruction_error, regularizer = self.ELBO(x)
