@@ -140,7 +140,7 @@ class VAE(nn.Module):
 def generate_image(X, encoder, decoder, latent_dim, channels, input_dim):
     X = X.to(device)
     mu, log_var = torch.split(encoder.forward(X), latent_dim, dim=1)
-    eps = torch.normal(mean=0, std=torch.ones(latent_dim))
+    eps = torch.normal(mean=0, std=torch.ones(latent_dim)).to(device)
     z = mu + torch.exp(0.5*log_var) * eps
     theta = decoder.forward(z)
     image = torch.argmax(theta, dim=-1)

@@ -100,8 +100,6 @@ folder_path = os.path.join(main_path, "singh_cp_pipeline_singlecell_images")
 metadata_path= os.path.join(main_path, "metadata.csv")
 output_path = 'resulting_images.npy'
 
-folder_path = "Data/singh_cp_pipeline_singlecell_images"
-metadata_path = "Data/metadata.csv"
 
 
 X_train = DataLoader(folder_path = folder_path,
