@@ -86,7 +86,7 @@ class VAE(nn.Module):
         self.latent_dim = latent_dim
 
         self.data_length = len(X)
-        self.eps = torch.normal(mean=0, std=torch.ones(latent_dim))
+        self.eps = torch.normal(mean=0, std=torch.ones(latent_dim)).to(device)
         # self.prior = torch.distributions.MultivariateNormal(loc=torch.zeros(latent_dim), covariance_matrix=torch.eye(latent_dim))
 
     def encode(self, x):
@@ -102,6 +102,10 @@ class VAE(nn.Module):
 
     def ELBO(self, x):
         mu, log_var = self.encode(x)
+        assert torch.get_device(mu) == torch.get_device(log_var)
+        assert torch.get_device(mu) == torch.get_device(self.eps)
+        assert torch.get_device(mu) == torch.get_device(x)
+        
         z = self.reparameterization(mu, log_var)
         theta = self.decode(z)
         log_posterior = log_Normal(z, mu, log_var)
@@ -127,8 +131,8 @@ class VAE(nn.Module):
                 optimizer.zero_grad()
                 elbo, reconstruction_error, regularizer = self.ELBO(x)
                 reconstruction_errors.append(
-                    reconstruction_error.detach().numpy())
-                regularizers.append(regularizer.detach().numpy())
+                    reconstruction_error.detach().cpu().numpy())
+                regularizers.append(regularizer.detach().cpu().numpy())
                 elbo.backward(retain_graph=True)
                 optimizer.step()
             if epochs == epoch + 1:
@@ -136,6 +140,8 @@ class VAE(nn.Module):
                 latent_space = self.reparameterization(mu, log_var)
             print(
                 f"Epoch: {epoch+1}, ELBO: {elbo}, Reconstruction Error: {reconstruction_error}, Regularizer: {regularizer}")
+            del elbo, optimizer, reconstruction_error, regularizer
+        torch.cuda.memory_summary() 
         return self.encoder, self.decoder, reconstruction_errors, regularizers, latent_space
 
 

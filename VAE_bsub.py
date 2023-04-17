@@ -11,9 +11,9 @@ import torchvision.transforms as T
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # configuration
-latent_dim = 50
-epochs = 5
-batch_size = 10
+latent_dim = 30
+epochs = 2
+batch_size = 5
 
 pixel_range = 256
 input_dim = 28
@@ -100,9 +100,6 @@ folder_path = os.path.join(main_path, "singh_cp_pipeline_singlecell_images")
 metadata_path= os.path.join(main_path, "metadata.csv")
 output_path = 'resulting_images.npy'
 
-folder_path = "Data/singh_cp_pipeline_singlecell_images"
-metadata_path = "Data/metadata.csv"
-
 
 X_train = DataLoader(folder_path = folder_path,
                      metadata_path=metadata_path,
@@ -125,7 +122,10 @@ encoder_VAE, decoder_VAE, reconstruction_errors, regularizers, latent_space = VA
 print("sucessfully trained VAE")
 
 
-np.savez("latent_space.npz", latent_space=latent_space.detach().numpy())
+np.savez("latent_space.npz", latent_space=latent_space.detach().cpu().numpy())
+np.savez("reconstuct.npz", reconstruct = reconstruction_errors.detach().cpu().numpy())
+np.savez("regular.npz", regular = regularizers.detach().cpu().numpy())
+
 
 generated_images = []
 for i in range(9):
