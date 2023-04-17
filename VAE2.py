@@ -150,9 +150,9 @@ def generate_image(X, encoder, decoder, latent_dim, channels, input_dim):
     return image
 
 
-latent_dim = 50
-epochs = 5
-batch_size = 10
+latent_dim = 10
+epochs = 20
+batch_size = 30
 
 pixel_range = 256
 input_dim = 28
