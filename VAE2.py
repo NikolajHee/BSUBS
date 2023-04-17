@@ -177,8 +177,9 @@ encoder_VAE, decoder_VAE, reconstruction_errors, regularizers, latent_space = VA
 
 
 np.savez("latent_space.npz", latent_space=latent_space.detach().cpu().numpy())
-np.savez("reconstruction_errors.npz", reconstruction_errors=reconstruction_errors.detach().cpu().numpy())
-np.savez("regularizers.npz", regularizers=regularizers.detach().cpu().numpy())
+np.savez("reconstruction_errors.npz", reconstruction_errors=np.array(reconstruction_errors))
+
+np.savez("regularizers.npz", regularizers=np.array(regularizers))
 
 
 generated_images = []
