@@ -119,10 +119,11 @@ class VAE(nn.Module):
         optimizer = torch.optim.SGD(parameters, lr=lr)
         reconstruction_errors = []
         regularizers = []
-        for epoch in tqdm(range(epochs)):
-            for i in tqdm(range(0, self.data_length, batch_size)):
+        for epoch in range(epochs):
+            for i in range(0, self.data_length, batch_size):
+                print("Batch", i)
                 batch_size = min(i+batch_size, self.data_length - i)
-
+                torch.cuda.memory_allocated()
                 x = X[i:i+batch_size].to(device)
                 optimizer.zero_grad()
                 elbo, reconstruction_error, regularizer = self.ELBO(x)

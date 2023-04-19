@@ -113,10 +113,10 @@ class VAE(nn.Module):
         # print(elbo, reconstruction_error, regularizer)
         return elbo, reconstruction_error, regularizer
 
-    def train_VAE(self, X, epochs, batch_size, lr=10e-16):
+    def train_VAE(self, X, epochs, batch_size, lr=10e-10):
         parameters = [param for param in self.parameters()
                       if param.requires_grad == True]
-        optimizer = torch.optim.SGD(parameters, lr=lr)
+        optimizer = torch.optim.Adam(parameters, lr=lr)
         reconstruction_errors = []
         regularizers = []
         for epoch in range(epochs):
@@ -150,8 +150,8 @@ def generate_image(X, encoder, decoder, latent_dim, channels, input_dim):
     return image
 
 
-latent_dim = 10
-epochs = 20
+latent_dim = 200
+epochs = 10
 batch_size = 30
 
 pixel_range = 256
