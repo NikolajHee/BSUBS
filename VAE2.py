@@ -37,6 +37,10 @@ class encoder(nn.Module):
         self.fully_connected = nn.Linear(
             32 * self.input_dim * self.input_dim, 2 * latent_dim)
 
+        nn.init.xavier_normal_(self.conv1.weight)
+        nn.init.xavier_normal_(self.conv2.weight)
+        nn.init.xavier_normal_(self.fully_connected.weight)
+
     def forward(self, x):
         x = self.conv1(x)
         x = nn.functional.relu(x)
@@ -61,6 +65,11 @@ class decoder(nn.Module):
         self.fully_connected = nn.Linear(
             channels * self.input_dim * self.input_dim, channels * self.input_dim * self.input_dim * 256)
         self.softmax = nn.Softmax(dim=1)
+
+        nn.init.xavier_normal_(self.input.weight)
+        nn.init.xavier_normal_(self.conv1.weight)
+        nn.init.xavier_normal_(self.conv2.weight)
+        nn.init.xavier_normal_(self.fully_connected.weight)
 
     def forward(self, x):
         x = self.input(x)
@@ -119,8 +128,8 @@ class VAE(nn.Module):
         optimizer = torch.optim.Adam(parameters, lr=lr)
         reconstruction_errors = []
         regularizers = []
-        for epoch in range(epochs):
-            for i in range(0, self.data_length, batch_size):
+        for epoch in tqdm(range(epochs)):
+            for i in tqdm(range(0, self.data_length, batch_size)):
                 x = X[i:i+batch_size].to(device)
                 optimizer.zero_grad()
                 elbo, reconstruction_error, regularizer = self.ELBO(x)
@@ -132,7 +141,7 @@ class VAE(nn.Module):
             if epochs == epoch + 1:
                 mu, log_var = self.encode(x)
                 latent_space = self.reparameterization(mu, log_var)
-            print(
+            tqdm.write(
                 f"Epoch: {epoch+1}, ELBO: {elbo}, Reconstruction Error: {reconstruction_error}, Regularizer: {regularizer}")
         return self.encoder, self.decoder, reconstruction_errors, regularizers, latent_space
 
@@ -148,6 +157,7 @@ def generate_image(X, encoder, decoder, latent_dim, channels, input_dim):
     image = torch.permute(image, (1, 2, 0))
     image = image.cpu().numpy()
     return image
+
 
 
 latent_dim = 200
