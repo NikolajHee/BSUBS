@@ -11,7 +11,7 @@ def log_Categorical(x, theta, num_classes):
     x_one_hot = nn.functional.one_hot(
         x.flatten(start_dim=1, end_dim=-1).long(), num_classes=num_classes)
     log_p = torch.sum(
-        x_one_hot * torch.log(torch.clamp(theta, 10e-4, 1.-10e-4)), dim=-1)
+        x_one_hot * torch.log(theta), dim=-1)
     return log_p
 
 
@@ -36,6 +36,13 @@ class encoder(nn.Module):
         self.conv2 = nn.Conv2d(16, 32, kernel_size=5, padding="same")
         self.fully_connected = nn.Linear(
             32 * self.input_dim * self.input_dim, 2 * latent_dim)
+
+        nn.init.zeros_(self.conv1.weight)
+        nn.init.zeros_(self.conv2.weight)
+        nn.init.zeros_(self.fully_connected.weight)
+        self.conv1.bias.data.fill_(1)
+        self.conv2.bias.data.fill_(1)
+        self.fully_connected.bias.data.fill_(1)
 
     def forward(self, x):
         x = self.conv1(x)
@@ -106,63 +113,63 @@ class VAE(nn.Module):
         theta = self.decode(z)
         log_posterior = log_Normal(z, mu, log_var)
         log_prior = log_standard_Normal(z)
-        log_con_like = log_Categorical(x, theta, self.pixel_range)
-        reconstruction_error = (torch.sum(log_con_like, dim=-1)).mean()
-        regularizer = (- torch.sum(log_posterior - log_prior, dim=-1)).mean()
-        elbo = - (reconstruction_error + regularizer)
-        # print(elbo, reconstruction_error, regularizer)
+        log_like = log_Categorical(x, theta, self.pixel_range)
+        reconstruction_error = - (torch.sum(log_like, dim=-1)).mean()
+        regularizer = - (torch.sum(log_posterior + log_prior, dim=-1)).mean()
+        elbo = (reconstruction_error + regularizer)
+        tqdm.write(
+            f"ELBO: {elbo.detach()}, Reconstruction error: {reconstruction_error.detach()}, Regularizer: {regularizer.detach()}")
         return elbo, reconstruction_error, regularizer
 
-    def train_VAE(self, X, epochs, batch_size, lr=10e-16):
+    def train_VAE(self, X, epochs, batch_size, lr=10e-8):
         parameters = [param for param in self.parameters()
                       if param.requires_grad == True]
-        optimizer = torch.optim.SGD(parameters, lr=lr)
+        optimizer = torch.optim.Adam(parameters, lr=lr)
         reconstruction_errors = []
         regularizers = []
-        for epoch in range(epochs):
-            for i in range(0, self.data_length, batch_size):
-                print("Batch", i)
-                batch_size = min(i+batch_size, self.data_length - i)
-                torch.cuda.memory_allocated()
+        self.train()
+        for epoch in tqdm(range(epochs)):
+            for i in tqdm(range(0, self.data_length, batch_size)):
                 x = X[i:i+batch_size].to(device)
                 optimizer.zero_grad()
                 elbo, reconstruction_error, regularizer = self.ELBO(x)
                 reconstruction_errors.append(
-                    reconstruction_error.detach().cpu().numpy())
-                regularizers.append(regularizer.detach().cpu().numpy())
+                    reconstruction_error.detach().numpy())
+                regularizers.append(regularizer.detach().numpy())
                 elbo.backward(retain_graph=True)
                 optimizer.step()
-            if epochs == epoch + 1:
-                mu, log_var = self.encode(x)
-                latent_space = self.reparameterization(mu, log_var)
-            print(
-                f"Epoch: {epoch+1}, ELBO: {elbo}, Reconstruction Error: {reconstruction_error}, Regularizer: {regularizer}")
+            tqdm.write(
+                f"Epoch: {epoch+1}, ELBO: {elbo.detach()}, Reconstruction Error: {reconstruction_error.detach()}, Regularizer: {regularizer.detach()}")
+        mu, log_var = self.encode(x)
+        latent_space = self.reparameterization(mu, log_var)
         return self.encoder, self.decoder, reconstruction_errors, regularizers, latent_space
 
 
 def generate_image(X, encoder, decoder, latent_dim, channels, input_dim):
+    encoder.eval()
+    decoder.eval()
     X = X.to(device)
     mu, log_var = torch.split(encoder.forward(X), latent_dim, dim=1)
-    eps = torch.normal(mean=0, std=torch.ones(latent_dim)).to(device)
+    eps = torch.normal(mean=0, std=torch.ones(latent_dim))
     z = mu + torch.exp(0.5*log_var) * eps
     theta = decoder.forward(z)
     image = torch.argmax(theta, dim=-1)
     image = image.reshape((channels, input_dim, input_dim))
     image = torch.permute(image, (1, 2, 0))
-    image = image.cpu().numpy()
+    image = image.numpy()
     return image
 
 if __name__ == "__main__":
     latent_dim = 50
-    epochs = 1
+    epochs = 5
     batch_size = 10
 
     pixel_range = 256
     input_dim = 28
     channels = 1
 
-    train_size = 100
-    test_size = 100
+    train_size = 1000
+    test_size = 1000
 
     trainset = datasets.MNIST(
         root='./MNIST', train=True, download=True, transform=None)
@@ -173,23 +180,25 @@ if __name__ == "__main__":
     X_test = testset.data[:test_size].reshape(
         (test_size, channels, input_dim, input_dim)).float()
 
+
     # X = np.load("image_matrix.npz")["images"][:1000]
+    # X = torch.tensor(X, dtype=torch.float32).permute(0, 3, 1, 2)
 
     VAE = VAE(X_train, pixel_range=pixel_range,
             latent_dim=latent_dim, input_dim=input_dim, channels=channels).to(device)
     encoder_VAE, decoder_VAE, reconstruction_errors, regularizers, latent_space = VAE.train_VAE(
         X=X_train, epochs=epochs, batch_size=batch_size)
 
-    torch.save(encoder_VAE, "encoder.pt")
-    torch.save(decoder_VAE, "decoder.pt")
+    torch.save(encoder_VAE, "encoder_VAE.pt")
+    torch.save(decoder_VAE, "decoder_VAE.pt")
 
-    np.savez("latent_space.npz", latent_space=latent_space.detach().numpy())
+    np.savez("latent_space_VAE.npz", latent_space=latent_space.detach().numpy())
 
     plt.plot(np.arange(0, len(reconstruction_errors), 1),
             reconstruction_errors, label="Reconstruction Error")
     plt.plot(np.arange(0, len(regularizers), 1), regularizers, label="Regularizer")
     plt.xlabel("Epochs")
-    plt.xticks(ticks=np.arange(0, (epochs+1)*len(X_train)//batch_size, len(X_train)//batch_size),
+    plt.xticks(ticks=np.arange(0, (epochs+1)*len(X_train)/batch_size, len(X_train)/batch_size),
             labels=np.arange(0, epochs+1, 1))
     plt.title("ELBO Components")
     plt.legend()
