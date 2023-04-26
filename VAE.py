@@ -134,9 +134,13 @@ class VAE(nn.Module):
                 optimizer.zero_grad()
                 elbo, reconstruction_error, regularizer = self.ELBO(x)
                 reconstruction_errors.append(
-                    reconstruction_error.detach().numpy())
-                regularizers.append(regularizer.detach().numpy())
-                elbo.backward(retain_graph=True)
+                    reconstruction_error.detach().cpu().numpy())
+                regularizers.append(regularizer.detach().cpu().numpy())
+                try:
+                    elbo.backward(retain_graph=True)
+                except RuntimeError:
+                    print("Warninng: NaN's' detected")
+                    continue
                 optimizer.step()
             tqdm.write(
                 f"Epoch: {epoch+1}, ELBO: {elbo.detach()}, Reconstruction Error: {reconstruction_error.detach()}, Regularizer: {regularizer.detach()}")
@@ -150,13 +154,13 @@ def generate_image(X, encoder, decoder, latent_dim, channels, input_dim):
     decoder.eval()
     X = X.to(device)
     mu, log_var = torch.split(encoder.forward(X), latent_dim, dim=1)
-    eps = torch.normal(mean=0, std=torch.ones(latent_dim))
+    eps = torch.normal(mean=0, std=torch.ones(latent_dim)).to(device)
     z = mu + torch.exp(0.5*log_var) * eps
     theta = decoder.forward(z)
     image = torch.argmax(theta, dim=-1)
     image = image.reshape((channels, input_dim, input_dim))
     image = torch.permute(image, (1, 2, 0))
-    image = image.numpy()
+    image = image.cpu().numpy()
     return image
 
 if __name__ == "__main__":

@@ -12,7 +12,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 save_folder_path = "gridsearch_results/"
 
-latent_dims = [10, 20, 50, 100, 200]
+latent_dims = [200, 10, 20, 50, 100]
 epochs = 10
 batch_size = 30
 
@@ -34,9 +34,9 @@ X_test = testset.data.reshape(
 for latent_dim in latent_dims:
     print("latent_dim: ", latent_dim)
 
-    VAE = VAE(X_train, pixel_range=pixel_range,
+    VAE_ = VAE(X_train, pixel_range=pixel_range,
             latent_dim=latent_dim, input_dim=input_dim, channels=channels).to(device)
-    encoder_VAE, decoder_VAE, reconstruction_errors, regularizers, latent_space = VAE.train_VAE(
+    encoder_VAE, decoder_VAE, reconstruction_errors, regularizers, latent_space = VAE_.train_VAE(
         X=X_train, epochs=epochs, batch_size=batch_size)
 
     name = "latent_dim_" + str(latent_dim) + "_epochs_" + str(epochs) + "_batch_size_" + str(batch_size) + "_"
