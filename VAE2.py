@@ -12,7 +12,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 save_folder_path = "gridsearch_results/"
 
-latent_dims = [200, 10, 20, 50, 100]
+latent_dims = np.power(2, np.arange(1, 6)) # [2,4,8,16,32]
 epochs = 10
 batch_size = 30
 
@@ -36,7 +36,7 @@ for latent_dim in latent_dims:
 
     VAE_ = VAE(X_train, pixel_range=pixel_range,
             latent_dim=latent_dim, input_dim=input_dim, channels=channels).to(device)
-    encoder_VAE, decoder_VAE, reconstruction_errors, regularizers, latent_space = VAE_.train_VAE(
+    encoder_VAE, decoder_VAE, reconstruction_errors, regularizers, latent_space, error_log = VAE_.train_VAE(
         X=X_train, epochs=epochs, batch_size=batch_size)
 
     name = "latent_dim_" + str(latent_dim) + "_epochs_" + str(epochs) + "_batch_size_" + str(batch_size) + "_"
@@ -44,6 +44,10 @@ for latent_dim in latent_dims:
     np.savez(save_folder_path + name + "latent_space.npz", latent_space=latent_space.detach().cpu().numpy())
     np.savez(save_folder_path + name + "reconstruction_errors.npz", reconstruction_errors=np.array(reconstruction_errors))
     np.savez(save_folder_path + name + "regularizers.npz", regularizers=np.array(regularizers))
+
+    f = open(save_folder_path + name + "error_log.txt", "w")
+    f.write(error_log)
+    f.close()
 
 
     generated_images = []
@@ -55,5 +59,5 @@ for latent_dim in latent_dims:
     np.savez(save_folder_path + name + "generated_images.npz", generated_images=np.array(generated_images))
 
 
-torch.save(save_folder_path + name + encoder_VAE, "encoder.pt")
-torch.save(save_folder_path + name + decoder_VAE, "decoder.pt")
+# torch.save(save_folder_path + name + encoder_VAE, "encoder.pt")
+# torch.save(save_folder_path + name + decoder_VAE, "decoder.pt")
