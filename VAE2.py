@@ -10,9 +10,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # gridsearch for latent_dim
 
-save_folder_path = "gridsearch_results/"
-
-latent_dims = np.power(2, np.arange(1, 6)) # [2,4,8,16,32]
+save_folder_path = "gridsearch_results/" # 4, 8, 16, 32, 64, 128
 epochs = 10
 batch_size = 30
 
