@@ -22,16 +22,18 @@ testset = datasets.MNIST(
 
 labels = testset.targets.numpy()
 
-model = encoder(latent_dim=latent_dim, input_dim=input_dim, channels=channels).to(device)
+# model = encoder(latent_dim=latent_dim, input_dim=input_dim, channels=channels).to(device)
 
-model.load_state_dict(torch.load("encoder.pt"))
+# model.load_state_dict(torch.load("encoder.pt"))
+
+model = torch.load("encoder.pt").to(device)
 
 # save latent space
 latent_points = np.zeros((len(testset), latent_dim))
 label = np.zeros((len(testset)))
 
 for i, image in enumerate(testset.data):
-    image = image.reshape((1, channels, input_dim, input_dim)).float()
+    image = image.reshape((1, channels, input_dim, input_dim)).float().to(device)
     latent_point = model.forward(image)
     latent_points[i] = latent_point.detach().cpu().numpy()
     label[i] = labels[i]

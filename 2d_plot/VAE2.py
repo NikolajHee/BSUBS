@@ -12,7 +12,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 save_folder_path = "" # 4, 8, 16, 32, 64, 128
 
-latent_dim = 2
+latent_dim = 1
 epochs = 10
 batch_size = 30
 
