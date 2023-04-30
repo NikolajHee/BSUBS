@@ -11,6 +11,8 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # gridsearch for latent_dim
 
 save_folder_path = "gridsearch_results/" # 4, 8, 16, 32, 64, 128
+
+latent_dims = [2**i for i in range(1,5)]
 epochs = 10
 batch_size = 30
 
@@ -44,7 +46,7 @@ for latent_dim in latent_dims:
     np.savez(save_folder_path + name + "regularizers.npz", regularizers=np.array(regularizers))
 
     f = open(save_folder_path + name + "error_log.txt", "w")
-    f.write(error_log)
+    f.write( str(error_log))
     f.close()
 
 
