@@ -30,6 +30,12 @@ X_train = trainset.data.reshape(
 X_test = testset.data.reshape(
     (len(testset), channels, input_dim, input_dim)).float()
 
+# plotting the 9 test images
+fig, axs = plt.subplots(3, 3)
+for i in range(3):
+    for j in range(3):
+        axs[i, j].imshow(X_test[i*3+j].reshape((input_dim, input_dim)), cmap='gray')
+plt.show()
 
 for latent_dim in latent_dims:
     print("latent_dim: ", latent_dim)

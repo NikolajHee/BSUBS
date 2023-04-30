@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
+# from torchsummary import summary
 from tqdm import tqdm
 
 
@@ -114,7 +115,7 @@ class VAE(nn.Module):
     def decode(self, z):
         return self.decoder.forward(z)
 
-    def ELBO(self, x):
+    def forward(self, x):
         mu, log_var = self.encode(x)
         z = self.reparameterization(mu, log_var)
 
@@ -134,7 +135,7 @@ class VAE(nn.Module):
 
         return elbo, reconstruction_error, regularizer
 
-    def train_VAE(self, X, epochs, batch_size, lr=10e-5):
+    def train_VAE(self, dataloader, epochs, batch_size, lr=10e-5):
         parameters = [param for param in self.parameters()
                       if param.requires_grad == True]
         optimizer = torch.optim.Adam(parameters, lr=lr)
@@ -143,11 +144,11 @@ class VAE(nn.Module):
         regularizers = []
 
         self.train()
-        for epoch in range(epochs):
-            for i in range(0, self.data_length, batch_size):
-                x = X[i:i+batch_size].to(device)
+        for epoch in tqdm(range(epochs)):
+            for batch in dataloader:
+                x = batch.to(device)
                 optimizer.zero_grad()
-                elbo, reconstruction_error, regularizer = self.ELBO(x)
+                elbo, reconstruction_error, regularizer = self.forward(x)
                 reconstruction_errors.append(
                     reconstruction_error.detach().cpu().numpy())
                 regularizers.append(regularizer.detach().cpu().numpy())
