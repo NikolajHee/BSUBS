@@ -48,5 +48,5 @@ name = "latent_dim_" + str(latent_dim) + "_epochs_" + str(epochs) + "_batch_size
 
 
 
-torch.save("encoder.pt")
-torch.save("decoder.pt")
+torch.save(encoder_VAE, "encoder.pt")
+torch.save(decoder_VAE, "decoder.pt")
