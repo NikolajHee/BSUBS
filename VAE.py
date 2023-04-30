@@ -144,8 +144,9 @@ class VAE(nn.Module):
         regularizers = []
 
         self.train()
-        for epoch in tqdm(range(epochs)):
-            for batch in dataloader:
+        for epoch in range(epochs):
+            print("Epoch: ", epoch+1)
+            for i, batch in enumerate(dataloader):
                 x = batch.to(device)
                 optimizer.zero_grad()
                 elbo, reconstruction_error, regularizer = self.forward(x)
@@ -155,7 +156,11 @@ class VAE(nn.Module):
                 try:
                     elbo.backward(retain_graph=True)
                 except RuntimeError:
-                    self.error_log[(epoch, i)] = (elbo, reconstruction_error, regularizer)
+                    # return true for each element in the tensor if it is NaN
+                    self.error_log[(epoch, i)] = (torch.isnan(elbo).any().detach().cpu().numpy(),
+                                                  torch.isnan(reconstruction_error).any().detach().cpu().numpy(),
+                                                  torch.isnan(regularizer).any().detach().cpu().numpy())
+                    
                     continue
                 optimizer.step()
 

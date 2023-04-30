@@ -1,2 +1,4 @@
 plotting.py
 MNIST/
+plot_errors.py
+plot_grod_search.py
