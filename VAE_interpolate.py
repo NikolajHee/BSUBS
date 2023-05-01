@@ -75,18 +75,20 @@ def interpolate(v1, v2, Nstep):
 testset = datasets.MNIST(
     root='./MNIST', train=False, download=True, transform=None)
 
-X_3 = testset.data[testset.targets == 3]
-X_5 = testset.data[testset.targets == 5]
+X_3 = testset.data[0] 
+# testset.data[testset.targets == 3]
+X_5 = testset.data[1] 
+# testset.data[testset.targets == 5]
 
 
-def _encode(X, latent_dim, encoder):
-    mu, log_var = torch.split(encoder.forward(X), latent_dim, dim=1)
+def _encode(x, latent_dim, encoder):
+    mu, log_var = torch.split(encoder.forward(x=x), latent_dim, dim=1)
     eps = torch.normal(mean=0, std=torch.ones(latent_dim)).to(device)
     z = mu + torch.exp(0.5*log_var) * eps
     return z
 
-z1 = _encode(X_3[0], 2, encoder)
-z2 = _encode(X_5[0], 2, encoder)
+z1 = _encode(X_3, 2, encoder)
+z2 = _encode(X_5, 2, encoder)
 
 interpolated_images = []
 

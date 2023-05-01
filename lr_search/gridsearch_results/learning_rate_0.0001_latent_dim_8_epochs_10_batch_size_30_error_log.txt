@@ -1,0 +1,1 @@
+{(9, 59490): (tensor(nan, device='cuda:0', grad_fn=<AddBackward0>), tensor(nan, device='cuda:0', grad_fn=<NegBackward0>), tensor(6.7628, device='cuda:0', grad_fn=<NegBackward0>))}
