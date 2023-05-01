@@ -103,7 +103,7 @@ class VAE(nn.Module):
         self.data_length = len(X)
         self.eps = torch.normal(mean=0, std=torch.ones(latent_dim)).to(device)
         # self.prior = torch.distributions.MultivariateNormal(loc=torch.zeros(latent_dim), covariance_matrix=torch.eye(latent_dim))
-
+        print("successfully init VAE")
     def encode(self, x):
         mu, log_var = torch.split(
             self.encoder.forward(x), self.latent_dim, dim=1)
@@ -139,7 +139,7 @@ class VAE(nn.Module):
         parameters = [param for param in self.parameters()
                       if param.requires_grad == True]
         optimizer = torch.optim.Adam(parameters, lr=lr)
-
+        print("test")
         reconstruction_errors = []
         regularizers = []
 
