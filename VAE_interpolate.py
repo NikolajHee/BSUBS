@@ -41,7 +41,7 @@ VAE_ = VAE(X_train, pixel_range=pixel_range,
         latent_dim=latent_dim, input_dim=input_dim, channels=channels).to(device)
 print("VAE_ created")
 encoder_VAE, decoder_VAE, reconstruction_errors, regularizers, latent_space, error_log = VAE_.train_VAE(
-    dataloader=X_train, epochs=epochs, batch_size=batch_size)
+    X=X_train, epochs=epochs, batch_size=batch_size)
 print("VAE trained")
 
 name = "latent_dim_" + str(latent_dim) + "_epochs_" + str(epochs) + "_batch_size_" + str(batch_size) + "_"

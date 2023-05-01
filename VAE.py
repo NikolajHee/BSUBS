@@ -4,7 +4,6 @@ import torch
 import torch.nn as nn
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
-# from torchsummary import summary
 from tqdm import tqdm
 
 
@@ -47,7 +46,6 @@ class encoder(nn.Module):
         self.conv1.bias.data.fill_(1)
         self.conv2.bias.data.fill_(1)
         self.fully_connected.bias.data.fill_(1)
-        print("encoder initialized")
 
     def forward(self, x):
         x = self.conv1(x)
@@ -75,7 +73,6 @@ class decoder(nn.Module):
         self.fully_connected = nn.Linear(
             channels * self.input_dim * self.input_dim, channels * self.input_dim * self.input_dim * pixel_range)
         self.softmax = nn.Softmax(dim=2)  # changed dim from 1 to 2
-        print("decoder initialized")
 
     def forward(self, x):
         x = self.input(x)
@@ -105,8 +102,6 @@ class VAE(nn.Module):
         self.data_length = len(X)
         self.eps = torch.normal(mean=0, std=torch.ones(latent_dim)).to(device)
         # self.prior = torch.distributions.MultivariateNormal(loc=torch.zeros(latent_dim), covariance_matrix=torch.eye(latent_dim))
-        print("successfully init VAE")
-
 
     def encode(self, x):
         mu, log_var = torch.split(
@@ -119,7 +114,7 @@ class VAE(nn.Module):
     def decode(self, z):
         return self.decoder.forward(z)
 
-    def forward(self, x):
+    def ELBO(self, x):
         mu, log_var = self.encode(x)
         z = self.reparameterization(mu, log_var)
 
@@ -139,27 +134,28 @@ class VAE(nn.Module):
 
         return elbo, reconstruction_error, regularizer
 
-    def train_VAE(self, dataloader, epochs, batch_size, lr=10e-5):
+    def train_VAE(self, X, epochs, batch_size, lr=10e-5):
         parameters = [param for param in self.parameters()
                       if param.requires_grad == True]
         optimizer = torch.optim.Adam(parameters, lr=lr)
+
         reconstruction_errors = []
         regularizers = []
-        print("start training")
+
         self.train()
         for epoch in range(epochs):
-            for batch in dataloader:
-                x = batch.to(device)
+            for i in range(0, self.data_length, batch_size):
+                x = X[i:i+batch_size].to(device)
                 optimizer.zero_grad()
-                elbo, reconstruction_error, regularizer = self.forward(x)
+                elbo, reconstruction_error, regularizer = self.ELBO(x)
                 reconstruction_errors.append(
                     reconstruction_error.detach().cpu().numpy())
                 regularizers.append(regularizer.detach().cpu().numpy())
                 try:
                     elbo.backward(retain_graph=True)
                 except RuntimeError:
+                    self.error_log[(epoch, i)] = (elbo, reconstruction_error, regularizer)
                     continue
-                print("success", epoch)
                 optimizer.step()
 
             #tqdm.write(
