@@ -97,7 +97,6 @@ class VAE(nn.Module):
         self.decoder = decoder(input_dim, latent_dim, channels, pixel_range)
         self.pixel_range = pixel_range
         self.latent_dim = latent_dim
-        self.error_log = {}
 
         self.data_length = len(X)
         self.eps = torch.normal(mean=0, std=torch.ones(latent_dim)).to(device)
@@ -114,7 +113,7 @@ class VAE(nn.Module):
     def decode(self, z):
         return self.decoder.forward(z)
 
-    def ELBO(self, x):
+    def forward(self, x):
         mu, log_var = self.encode(x)
         z = self.reparameterization(mu, log_var)
 
@@ -129,12 +128,12 @@ class VAE(nn.Module):
 
         elbo = reconstruction_error + regularizer
 
-        #tqdm.write(
-        #    f"ELBO: {elbo.detach()}, Reconstruction error: {reconstruction_error.detach()}, Regularizer: {regularizer.detach()}")
+        tqdm.write(
+            f"ELBO: {elbo.detach()}, Reconstruction error: {reconstruction_error.detach()}, Regularizer: {regularizer.detach()}")
 
         return elbo, reconstruction_error, regularizer
 
-    def train_VAE(self, X, epochs, batch_size, lr=10e-5):
+    def train_VAE(self, dataloader, epochs, batch_size, lr=10e-5):
         parameters = [param for param in self.parameters()
                       if param.requires_grad == True]
         optimizer = torch.optim.Adam(parameters, lr=lr)
@@ -143,28 +142,24 @@ class VAE(nn.Module):
         regularizers = []
 
         self.train()
-        for epoch in range(epochs):
-            for i in range(0, self.data_length, batch_size):
-                x = X[i:i+batch_size].to(device)
+        for epoch in tqdm(range(epochs)):
+            for batch in tqdm(dataloader):
+                x = batch.to(device)
                 optimizer.zero_grad()
-                elbo, reconstruction_error, regularizer = self.ELBO(x)
+                elbo, reconstruction_error, regularizer = self.forward(x)
                 reconstruction_errors.append(
                     reconstruction_error.detach().cpu().numpy())
                 regularizers.append(regularizer.detach().cpu().numpy())
-                try:
-                    elbo.backward(retain_graph=True)
-                except RuntimeError:
-                    self.error_log[(epoch, i)] = (elbo, reconstruction_error, regularizer)
-                    continue
+                elbo.backward(retain_graph=True)
                 optimizer.step()
 
-            #tqdm.write(
-            #    f"Epoch: {epoch+1}, ELBO: {elbo.detach()}, Reconstruction Error: {reconstruction_error.detach()}, Regularizer: {regularizer.detach()}")
+            tqdm.write(
+                f"Epoch: {epoch+1}, ELBO: {elbo.detach()}, Reconstruction Error: {reconstruction_error.detach()}, Regularizer: {regularizer.detach()}")
 
         mu, log_var = self.encode(x)
         latent_space = self.reparameterization(mu, log_var)
 
-        return self.encoder, self.decoder, reconstruction_errors, regularizers, latent_space, self.error_log
+        return self.encoder, self.decoder, reconstruction_errors, regularizers, latent_space
 
 
 def generate_image(X, encoder, decoder, latent_dim, channels, input_dim, batch_size=1):
