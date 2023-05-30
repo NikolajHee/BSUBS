@@ -18,7 +18,7 @@ epochs = 1
 batch_size = 10
 
 pixel_range = 256
-input_dim = 28
+input_dim = 68
 channels = 3
 
 train_size = 100
