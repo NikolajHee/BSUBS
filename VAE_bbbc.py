@@ -69,17 +69,17 @@ class DataLoader(Dataset):
 main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
 
 folder_path = os.path.join(main_path, "singh_cp_pipeline_singlecell_images")
-metadata_path= os.path.join(main_path, "metadata.csv")
+meta_path= os.path.join(main_path, "metadata.csv")
 
 
 
 
 X_train = DataLoader(folder_path = folder_path,
-                     metadata_path=metadata_path,
+                     meta_path=meta_path,
                      subset=subset)  
 
 X_test = DataLoader(folder_path = folder_path,
-                     metadata_path=metadata_path,
+                     meta_path=meta_path,
                      subset=subset, test=True)  
 
 print("sucessfully initialized dataloader")
