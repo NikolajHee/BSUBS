@@ -4,3 +4,4 @@ plot_*
 __pycache__
 .DS_Store
 *.backup
+pt_save/
