@@ -79,7 +79,7 @@ X_5 = X_test.data[1]
 
 
 def _encode(x, model):
-    mu, log_var = model.encode(x)
+    mu, log_var = model.encode(x.to(device))
     z = model.reparameterization(mu, log_var)
     return z
 
