@@ -46,22 +46,22 @@ print("VAE trained")
 
 name = "latent_dim_" + str(latent_dim) + "_epochs_" + str(epochs) + "_batch_size_" + str(batch_size) + "_"
 
-np.savez(save_folder_path + name + "latent_space.npz", latent_space=latent_space.detach().cpu().numpy())
-np.savez(save_folder_path + name + "reconstruction_errors.npz", reconstruction_errors=np.array(reconstruction_errors))
-np.savez(save_folder_path + name + "regularizers.npz", regularizers=np.array(regularizers))
+# np.savez(save_folder_path + name + "latent_space.npz", latent_space=latent_space.detach().cpu().numpy())
+# np.savez(save_folder_path + name + "reconstruction_errors.npz", reconstruction_errors=np.array(reconstruction_errors))
+# np.savez(save_folder_path + name + "regularizers.npz", regularizers=np.array(regularizers))
 
-f = open(save_folder_path + name + "error_log.txt", "w")
-f.write( str(error_log))
-f.close()
+# f = open(save_folder_path + name + "error_log.txt", "w")
+# f.write( str(error_log))
+# f.close()
 
 
-generated_images = []
-for i in range(9):
-    image = generate_image(X_test[i], encoder_VAE, decoder=decoder_VAE,
-                        latent_dim=latent_dim, channels=channels, input_dim=input_dim)
-    generated_images.append(image)
+# generated_images = []
+# for i in range(9):
+#     image = generate_image(X_test[i], encoder_VAE, decoder=decoder_VAE,
+#                         latent_dim=latent_dim, channels=channels, input_dim=input_dim)
+#     generated_images.append(image)
 
-np.savez(save_folder_path + name + "generated_images.npz", generated_images=np.array(generated_images))
+# np.savez(save_folder_path + name + "generated_images.npz", generated_images=np.array(generated_images))
 
 
 #**** Interpolation
@@ -72,28 +72,24 @@ def interpolate(v1, v2, Nstep):
         v = v1 + r * (i / (Nstep - 1))
         yield v
 
-testset = datasets.MNIST(
-    root='./MNIST', train=False, download=True, transform=None)
-
 X_3 = X_test.data[0] 
 # testset.data[testset.targets == 3]
 X_5 = X_test.data[1] 
 # testset.data[testset.targets == 5]
 
 
-def _encode(x, latent_dim, encoder):
-    mu, log_var = torch.split(encoder.forward(x.to(device)), latent_dim, dim=1)
-    eps = torch.normal(mean=0, std=torch.ones(latent_dim)).to(device)
-    z = mu + torch.exp(0.5*log_var) * eps
+def _encode(x, model):
+    mu, log_var = model.encode(x)
+    z = model.reparameterization(mu, log_var)
     return z
 
-z1 = _encode(X_3, 2, encoder_VAE)
-z2 = _encode(X_5, 2, encoder_VAE)
+z1 = _encode(X_3, VAE_)
+z2 = _encode(X_5, VAE_)
 
 interpolated_images = []
 
 for z in interpolate(z1, z2, 10):
-    theta = decoder.forward(z)
+    theta = VAE_.decode(z)
     image = torch.argmax(theta, dim=-1)
     image = image.reshape((batch_size, channels, input_dim, input_dim))
     image = torch.permute(image, (0, 2, 3, 1))
