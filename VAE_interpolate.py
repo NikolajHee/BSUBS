@@ -91,7 +91,7 @@ interpolated_images = []
 for z in interpolate(z1, z2, 10):
     theta = VAE_.decode(z)
     image = torch.argmax(theta, dim=-1)
-    image = image.reshape((batch_size, channels, input_dim, input_dim))
+    image = image.reshape((1, channels, input_dim, input_dim))
     image = torch.permute(image, (0, 2, 3, 1))
     image = image.cpu().numpy()
 
