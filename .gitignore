@@ -1,2 +1,5 @@
 plotting.py
 MNIST/
+plot_*
+__pycache__
+.DS_Store
