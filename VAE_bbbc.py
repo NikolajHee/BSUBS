@@ -14,19 +14,19 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # configuration
 latent_dim = 10
-epochs = 5
+epochs = 1
 batch_size = 10
 
 pixel_range = 256
 input_dim = 28
 channels = 3
 
-train_size = 10000
-test_size = 1000
+train_size = 100
+test_size = 10
 
 save_folder = 'BBC_VAE_results/'
 
-subset = (train_size,test_size)
+subset = (train_size, test_size)
 
 # dataset class
 class DataLoader(Dataset):
