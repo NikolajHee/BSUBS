@@ -1,4 +1,5 @@
 # imports
+print("script initiated")
 from VAE import log_Categorical, log_Normal, log_standard_Normal, encoder, decoder, VAE, generate_image
 import torch
 from torch.utils.data import Dataset
