@@ -9,11 +9,13 @@ import pickle
 
 # TODO: Add multiple initializations of VAE and save the best one
 
+print("script initiated")
+
 # device
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # configuration
-latent_dim = 10
+latent_dim = 16
 epochs = 1
 batch_size = 10
 
@@ -72,6 +74,8 @@ folder_path = os.path.join(main_path, "singh_cp_pipeline_singlecell_images")
 meta_path= os.path.join(main_path, "metadata.csv")
 
 
+print("script started")
+
 
 
 X_train = DataLoader(folder_path = folder_path,
@@ -84,12 +88,12 @@ X_test = DataLoader(folder_path = folder_path,
 
 print("sucessfully initialized dataloader")
 
-VAE = VAE(X_train, pixel_range=pixel_range,
+VAE_ = VAE(X_train, pixel_range=pixel_range,
         latent_dim=latent_dim, input_dim=input_dim, channels=channels).to(device)
 
 print("sucessfully initialized VAE")
 
-encoder_VAE, decoder_VAE, reconstruction_errors, regularizers, latent_space, error_log = VAE.train_VAE(
+encoder_VAE, decoder_VAE, reconstruction_errors, regularizers, latent_space, error_log = VAE_.train_VAE(
         X=X_train, epochs=epochs, batch_size=batch_size)
 
 print("sucessfully trained VAE")
