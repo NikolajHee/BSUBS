@@ -243,8 +243,8 @@ test_size = 10 # 88395 # 10000
 
 
 # path to singlecells
-main_path = "/Users/nikolaj/Fagprojekt/Data/"
-#main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
+# main_path = "/Users/nikolaj/Fagprojekt/Data/"
+main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
 
 subset = (train_size, test_size)
 
