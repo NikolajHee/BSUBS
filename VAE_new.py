@@ -222,7 +222,7 @@ channels = 1
 train_size = 60000
 test_size = 10000
 
-learning_rate = 1e-4
+learning_rate = 1e-5
 
 
 trainset = datasets.MNIST(
@@ -258,4 +258,18 @@ np.savez(save_folder_path + name + "latent_space.npz", latent_space=latent_space
 np.savez(save_folder_path + name + "reconstruction_errors.npz", reconstruction_errors=np.array(reconstruction_errors))
 np.savez(save_folder_path + name + "regularizers.npz", regularizers=np.array(regularizers))
 
+generated_images = []
+
+for batch in X_test:
+    for j in range(batch_size):
+        image = generate_image(batch[j], encoder_VAE, decoder=decoder_VAE,
+                            latent_dim=latent_dim, channels=channels, input_dim=input_dim)
+        generated_images.append(image)
+        if len(generated_images) == 9:
+            break
+    if len(generated_images) == 9:
+            break
+    
+
+np.savez(save_folder_path + name + "regularizers.npz", regularizers=np.array(generated_images))
 
