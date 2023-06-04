@@ -117,7 +117,7 @@ class VAE(nn.Module):
 
 
         # KL divergence term
-        p = torch.distributions.Normal(torch.zeros(self.latent_dim), torch.ones(self.latent_dim)).to(device)
+        p = torch.distributions.Normal(torch.zeros(self.latent_dim).to(device), torch.ones(self.latent_dim).to(device))
         q = torch.distributions.Normal(mu, torch.exp(0.5*log_var)).to(device)
 
        
