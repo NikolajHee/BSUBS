@@ -143,7 +143,7 @@ class VAE(nn.Module):
         # this nexxxt part is unclear to me
         log_scale = torch.nn.parameter.Parameter(torch.tensor([0.0]))
         scale = torch.exp(log_scale)
-        dist = torch.distributions.Normal(x_tilde, scale)
+        dist = torch.distributions.Normal(x_tilde, scale.to(device))
 
         log_pxz = dist.log_prob(x)
         log_pxz = torch.sum(log_pxz, dim=(1, 2, 3))
