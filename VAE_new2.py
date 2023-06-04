@@ -229,8 +229,8 @@ class BBBC(Dataset):
             return sample
 
 
-latent_dim = 8
-epochs = 3
+latent_dim = 30
+epochs = 10
 batch_size = 20
 
 pixel_range = 256
@@ -238,8 +238,8 @@ input_dim = 68
 channels = 3
 learning_rate = 1e-5
 
-train_size = 100 # 400000 # #60000
-test_size = 10 # 88395 # 10000
+train_size =  400000 # #60000
+test_size = 88395 # 10000
 
 
 # path to singlecells
