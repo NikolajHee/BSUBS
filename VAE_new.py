@@ -271,5 +271,5 @@ for batch in X_test:
             break
     
 
-np.savez(save_folder_path + name + "regularizers.npz", regularizers=np.array(generated_images))
+np.savez(save_folder_path + name + "generated_images.npz", generated_images=generated_images.detach().cpu().numpy())
 
