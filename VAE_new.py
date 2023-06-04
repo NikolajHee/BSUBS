@@ -264,12 +264,12 @@ for batch in X_test:
     for j in range(batch_size):
         image = generate_image(batch[j], encoder_VAE, decoder=decoder_VAE,
                             latent_dim=latent_dim, channels=channels, input_dim=input_dim)
-        generated_images.append(image)
+        generated_images.append(image.detach().cpu().numpy())
         if len(generated_images) == 9:
             break
     if len(generated_images) == 9:
             break
     
 
-np.savez(save_folder_path + name + "generated_images.npz", generated_images=generated_images.detach().cpu().numpy())
+np.savez(save_folder_path + name + "generated_images.npz", generated_images=np.array(generated_images))
 
