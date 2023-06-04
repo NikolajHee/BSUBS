@@ -158,8 +158,8 @@ class VAE(nn.Module):
     
                 elbo, reconstruction_error, regularizer = self.forward(x)
                 reconstruction_errors.append(
-                    reconstruction_error.detach().numpy())
-                regularizers.append(regularizer.detach().numpy())
+                    reconstruction_error.cpu().detach().numpy())
+                regularizers.append(regularizer.cpu().detach().numpy())
 
                 optimizer.zero_grad()
                 elbo.backward()
