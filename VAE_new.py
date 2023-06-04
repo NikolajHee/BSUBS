@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
-from torchsummary import summary
+# from torchsummary import summary
 from tqdm import tqdm
 import torchvision
 
@@ -117,8 +117,8 @@ class VAE(nn.Module):
 
 
         # KL divergence term
-        p = torch.distributions.Normal(torch.zeros(self.latent_dim), torch.ones(self.latent_dim))
-        q = torch.distributions.Normal(mu, torch.exp(0.5*log_var))
+        p = torch.distributions.Normal(torch.zeros(self.latent_dim), torch.ones(self.latent_dim)).to(device)
+        q = torch.distributions.Normal(mu, torch.exp(0.5*log_var)).to(device)
 
        
         z = self.reparameterization(mu, log_var)
@@ -242,8 +242,8 @@ X_test = DataLoader(testset.data[:test_size].reshape(
 VAE = VAE(X_train, pixel_range=pixel_range,
           latent_dim=latent_dim, input_dim=input_dim, channels=channels).to(device)
 
-print("VAE:")
-summary(VAE, input_size=(channels, input_dim, input_dim))
+# print("VAE:")
+# summary(VAE, input_size=(channels, input_dim, input_dim))
 
 encoder_VAE, decoder_VAE, reconstruction_errors, regularizers, latent_space = VAE.train_VAE(
     dataloader=X_train, epochs=epochs, batch_size=batch_size, lr=learning_rate)
