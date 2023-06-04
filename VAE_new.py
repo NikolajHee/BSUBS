@@ -198,7 +198,7 @@ def generate_image(X, encoder, decoder, latent_dim, channels, input_dim, batch_s
     decoder.eval()
     X = X.to(device)
     mu, log_var = torch.split(encoder.forward(X), latent_dim, dim=1)
-    eps = torch.normal(mean=0, std=torch.ones(latent_dim))
+    eps = torch.normal(mean=0, std=torch.ones(latent_dim)).to(device)
     z = mu + torch.exp(0.5*log_var) * eps
     x_tilde = decoder.forward(z)
     ## image = torch.argmax(theta, dim=-1)
@@ -206,7 +206,7 @@ def generate_image(X, encoder, decoder, latent_dim, channels, input_dim, batch_s
     # image = torch.permute(image, (0, 2, 3, 1))
     log_scale = torch.nn.parameter.Parameter(torch.tensor([0.0]))
     scale = torch.exp(log_scale)
-    dist = torch.distributions.Normal(x_tilde, scale)
+    dist = torch.distributions.Normal(x_tilde, scale.to(device))
     image = dist.sample()
     return image
 
