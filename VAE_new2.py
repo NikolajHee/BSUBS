@@ -135,10 +135,6 @@ class VAE(nn.Module):
         elbo = kl + reconstruct
         elbo = elbo.mean()
         
-
-        tqdm.write(
-            f"ELBO: {elbo}, Reconstruction error: { reconstruct.mean()}, Regularizer: {kl.mean()}")
-
         return elbo, reconstruct.mean(), kl.mean()
 
     def train_VAE(self, dataloader, epochs, batch_size, lr=10e-5):
@@ -151,7 +147,7 @@ class VAE(nn.Module):
 
         ## self.train()
         for epoch in tqdm(range(epochs)):
-            for batch in tqdm(dataloader):
+            for batch in dataloader:
                 
                 x = batch['image'].to(device)
                 x = x/255
@@ -164,9 +160,6 @@ class VAE(nn.Module):
                 optimizer.zero_grad()
                 elbo.backward()
                 optimizer.step()
-
-            tqdm.write(
-                f"Epoch: {epoch+1}, ELBO: {elbo.detach()}, Reconstruction Error: {reconstruction_error.detach()}, Regularizer: {regularizer.detach()}")
 
         mu, log_var = self.encode(x)
         latent_space = self.reparameterization(mu, log_var)
