@@ -23,7 +23,7 @@ latent_dim = 16
 epochs = 1
 batch_size = 10
 
-pixel_range = 256//2
+pixel_range = 256//8
 input_dim = 68
 channels = 3
 
