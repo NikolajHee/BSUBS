@@ -82,8 +82,8 @@ class BBBC(Dataset):
 # (batch_size, channels, input_dim, input_dim)
 
 
-# main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
-main_path = "/Users/nikolaj/Fagprojekt/Data/"
+main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
+# main_path = "/Users/nikolaj/Fagprojekt/Data/"
 
 folder_path = os.path.join(main_path, "singh_cp_pipeline_singlecell_images")
 meta_path= os.path.join(main_path, "metadata.csv")
