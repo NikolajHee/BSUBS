@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
-from torchsummary import summary
+# from torchsummary import summary
 from tqdm import tqdm
 
 
