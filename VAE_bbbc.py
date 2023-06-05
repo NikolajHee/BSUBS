@@ -1,17 +1,19 @@
 # imports
-print("script initiated")
-raise Exception("stop")
-from VAE_bbbc_mod import log_Categorical, log_Normal, log_standard_Normal, encoder, decoder, VAE, generate_image
+from VAE2 import log_Categorical, log_Normal, log_standard_Normal, encoder, decoder, VAE, generate_image
 import torch
 from torch.utils.data import Dataset
 import numpy as np
 import pandas as pd
 import os
 import pickle
+from torchsummary import summary
+from torch.utils.data import DataLoader
+import matplotlib.pyplot as plt
+
 
 # TODO: Add multiple initializations of VAE and save the best one
 
-print("script initiated")
+print("imports done")
 
 # device
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -21,7 +23,7 @@ latent_dim = 16
 epochs = 1
 batch_size = 10
 
-pixel_range = 256
+pixel_range = 256//2
 input_dim = 68
 channels = 3
 
@@ -30,11 +32,21 @@ test_size = 10
 
 save_folder = 'BBC_VAE_results/'
 
+
+if not(os.path.exists(save_folder)):
+    os.mkdir(save_folder)
+
+
 subset = (train_size, test_size)
 
 # dataset class
-class DataLoader(Dataset):
-    def __init__(self, folder_path, meta_path, subset, test=False):
+
+
+
+# Custom dataset class
+class BBBC(Dataset):
+    def __init__(self, folder_path, meta_path, subset=(390716, 97679), # 1/5 of the data is test data  by default
+                                                          test=False):
         self.meta = pd.read_csv(meta_path, index_col=0)
         self.col_names = self.meta.columns
         self.folder_path = folder_path
@@ -46,31 +58,32 @@ class DataLoader(Dataset):
         return self.test_size if self.test else self.train_size
     
     def normalize_to_255(self, x):
-        normalize = (x-np.min(x))/(np.max(x)-np.min(x))
-        to_255 = torch.tensor(np.round(normalize*255)).view((1,3,68,68)).float()
-        return to_255
+        # helper function to normalize to 255
+        to_255 = (x/np.max(x)) * 255
+        return to_255.astype(np.uint8).reshape((3,68,68))
 
     def __getitem__(self, idx):
-        if torch.is_tensor(idx): idx = idx.tolist()
-        if type(idx) == int: idx = slice(idx, idx+1)
-        
-        start = idx.start + self.train_size if self.test else idx.start
-        stop = idx.stop + self.train_size if self.test else idx.stop
-        for i in range(start, stop):
-            img_name = os.path.join(self.folder_path,
-                                    self.meta[self.col_names[1]][i], 
-                                    self.meta[self.col_names[3]][i])
-            image = np.load(img_name)
-            if i == start:
-                sample = self.normalize_to_255(image)
-            else:
-                sample = torch.cat((sample, self.normalize_to_255(image)), dim=0)
+        if self.test: idx += self.train_size
+        img_name = os.path.join(self.folder_path,
+                                self.meta[self.col_names[1]][idx], 
+                                self.meta[self.col_names[3]][idx])
+        image = np.load(img_name)
+        image = self.normalize_to_255(image)
+        moa = self.meta[self.col_names[-1]][idx]
+        # more relevant stuff here
+
+        sample = {"idx": idx, 
+                  "image": image, 
+                  "moa": moa, 
+                  } # more relevant stuff here
+
         return sample
 
 # (batch_size, channels, input_dim, input_dim)
 
 
-main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
+# main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
+main_path = "/Users/nikolaj/Fagprojekt/Data/"
 
 folder_path = os.path.join(main_path, "singh_cp_pipeline_singlecell_images")
 meta_path= os.path.join(main_path, "metadata.csv")
@@ -80,18 +93,29 @@ print("script started")
 
 
 
-X_train = DataLoader(folder_path = folder_path,
-                     meta_path=meta_path,
-                     subset=subset)  
 
-X_test = DataLoader(folder_path = folder_path,
-                     meta_path=meta_path,
-                     subset=subset, test=True)  
+dataset_train = BBBC(folder_path=main_path + "singh_cp_pipeline_singlecell_images",
+                        meta_path=main_path + "metadata.csv",
+                        subset=subset,
+                        test=False)
+
+dataset_test = BBBC(folder_path=main_path + "singh_cp_pipeline_singlecell_images",
+                        meta_path=main_path + "metadata.csv",
+                        subset=subset,
+                        test=True)
+
+X_train = DataLoader(dataset_train, batch_size=batch_size)#, shuffle=True, num_workers=0)
+
+X_test = DataLoader(dataset_test, batch_size=batch_size)#, shuffle=True, num_workers=0)  
+
 
 print("sucessfully initialized dataloader")
 
 VAE_ = VAE(X_train, pixel_range=pixel_range,
         latent_dim=latent_dim, input_dim=input_dim, channels=channels).to(device)
+
+print("VAE:")
+summary(VAE, input_size=(channels, input_dim, input_dim))
 
 print("sucessfully initialized VAE")
 
