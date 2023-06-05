@@ -120,7 +120,7 @@ VAE_ = VAE(X_train, pixel_range=pixel_range,
 print("sucessfully initialized VAE")
 
 encoder_VAE, decoder_VAE, reconstruction_errors, regularizers, latent_space, error_log = VAE_.train_VAE(
-        X=X_train, epochs=epochs, batch_size=batch_size)
+        dataloader=X_train, epochs=epochs, batch_size=batch_size)
 
 print("sucessfully trained VAE")
 
