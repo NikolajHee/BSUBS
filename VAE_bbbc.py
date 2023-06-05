@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import os
 import pickle
-from torchsummary import summary
+# from torchsummary import summary
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 
@@ -114,8 +114,8 @@ print("sucessfully initialized dataloader")
 VAE_ = VAE(X_train, pixel_range=pixel_range,
         latent_dim=latent_dim, input_dim=input_dim, channels=channels).to(device)
 
-print("VAE:")
-summary(VAE, input_size=(channels, input_dim, input_dim))
+# print("VAE:")
+# summary(VAE, input_size=(channels, input_dim, input_dim))
 
 print("sucessfully initialized VAE")
 
