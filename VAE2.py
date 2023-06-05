@@ -145,8 +145,8 @@ class VAE(nn.Module):
         self.train()
         for epoch in tqdm(range(epochs)):
             for batch in tqdm(dataloader):
-                x = batch.to(device)
-                x = torch.round(x/255)
+                x = torch.round(batch['image']/self.pixel_range)
+                x = x.to(device)
                 optimizer.zero_grad()
                 elbo, reconstruction_error, regularizer = self.forward(x)
                 reconstruction_errors.append(
@@ -175,5 +175,5 @@ def generate_image(X, encoder, decoder, latent_dim, channels, input_dim, batch_s
     image = torch.argmax(theta, dim=-1)
     image = image.reshape((batch_size, channels, input_dim, input_dim))
     image = torch.permute(image, (0, 2, 3, 1))
-    image = image.numpy()
+    image = image.cpu().numpy()
     return image
