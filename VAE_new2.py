@@ -231,7 +231,7 @@ input_dim = 68
 channels = 3
 learning_rate = 1e-5
 
-train_size =  400000 # #60000
+train_size =  10000 # #60000
 test_size = 88395 # 10000
 
 
