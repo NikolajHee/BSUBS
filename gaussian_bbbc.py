@@ -205,8 +205,8 @@ subset = (train_size, train_size)
 #∑torch.cuda.manual_seed(42)
 
 
-#main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
-main_path = "/Users/nikolaj/Fagprojekt/Data/"
+main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
+#main_path = "/Users/nikolaj/Fagprojekt/Data/"
 
 folder_path = os.path.join(main_path, "singh_cp_pipeline_singlecell_images")
 meta_path= os.path.join(main_path, "metadata.csv")
