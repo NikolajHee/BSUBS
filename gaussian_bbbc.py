@@ -4,10 +4,11 @@ import torch
 import torch.nn as nn
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
-from torchsummary import summary
+import os
+if '___ARKIV' in os.listdir():
+    from torchsummary import summary
 from tqdm import tqdm
 from torch.nn import functional as F
-import os
 from dataloader import BBBC
 
 
@@ -204,9 +205,11 @@ subset = (train_size, train_size)
 #torch.manual_seed(42)
 #∑torch.cuda.manual_seed(42)
 
-
-main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
-#main_path = "/Users/nikolaj/Fagprojekt/Data/"
+if '___ARKIV' in os.listdir():
+    main_path = "/Users/nikolaj/Fagprojekt/Data/"
+else:
+    main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
+    
 
 folder_path = os.path.join(main_path, "singh_cp_pipeline_singlecell_images")
 meta_path= os.path.join(main_path, "metadata.csv")
@@ -237,8 +240,9 @@ VAE = VAE(
     channels=channels,
 ).to(device)
 
-print("VAE:")
-summary(VAE, input_size=(channels, input_dim, input_dim))
+if '___ARKIV' in os.listdir():
+    print("VAE:")
+    summary(VAE, input_size=(channels, input_dim, input_dim))
 
 encoder_VAE, decoder_VAE, reconstruction_errors, regularizers, latent_space = VAE.train_VAE(
     dataloader=X_train, epochs=epochs)
