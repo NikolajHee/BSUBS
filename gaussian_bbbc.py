@@ -189,11 +189,11 @@ def generate_image(X, encoder, decoder, latent_dim, channels, input_dim, batch_s
     return image
 
 
-latent_dim = 4
-epochs = 1
-batch_size = 20
+latent_dim = 100
+epochs = 1000
+batch_size = 40
 
-train_size = 100
+train_size = 20000
 test_size = 1000
 
 input_dim = 68
