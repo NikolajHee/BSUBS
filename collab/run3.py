@@ -222,8 +222,8 @@ if __name__ == "__main__":
     folder_path = os.path.join(main_path, "singh_cp_pipeline_singlecell_images")
     meta_path= os.path.join(main_path, "metadata.csv")
 
-    trainset = BBBC(folder_path=folder_path, meta_path=meta_path, subset=subset, test=False, normalize='to_1',  exclude_dmso=True)  
-    testset = BBBC(folder_path=folder_path, meta_path=meta_path, subset=subset, test=True, normalize='to_1',  exclude_dmso=True)
+    trainset = BBBC(folder_path=folder_path, meta_path=meta_path, subset=subset, test=False, normalize='to_1')  
+    testset = BBBC(folder_path=folder_path, meta_path=meta_path, subset=subset, test=True, normalize='to_1')
 
 
     X_train = DataLoader(
