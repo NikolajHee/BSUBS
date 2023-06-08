@@ -294,7 +294,7 @@ if __name__ == "__main__":
     encoder_VAE, decoder_VAE, reconstruction_errors, regularizers, latent_space = VAE.train_VAE(
         dataloader=X_train, epochs=epochs)
 
-    results_folder = 'results/'
+    results_folder = 'results_advanced/'
     if not(os.path.exists(results_folder)):
         os.mkdir(results_folder)
 
