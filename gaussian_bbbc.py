@@ -84,7 +84,7 @@ class VAE(nn.Module):
         return mu, log_var
 
     def reparameterization(self, mu, log_var):
-        eps = torch.normal(mean=0, std=torch.ones(latent_dim)).to(device)
+        eps = torch.normal(mean=0, std=torch.ones(self.latent_dim)).to(device)
         return mu + torch.exp(0.5 * log_var) * eps
 
     def decode(self, z):
@@ -188,116 +188,116 @@ def generate_image(X, encoder, decoder, latent_dim, channels, input_dim, batch_s
     image = image.clip(0, 1)
     return image
 
+if __name__ == "__main__":
+    latent_dim = 500
+    epochs = 200
+    batch_size = 40
 
-latent_dim = 100
-epochs = 1000
-batch_size = 40
+    train_size = 20000
+    test_size = 1000
 
-train_size = 20000
-test_size = 1000
+    input_dim = 68
+    channels = 3
 
-input_dim = 68
-channels = 3
+    subset = (train_size, train_size)
 
-subset = (train_size, train_size)
+    #torch.backends.cudnn.deterministic = True
+    #torch.manual_seed(42)
+    #∑torch.cuda.manual_seed(42)
 
-#torch.backends.cudnn.deterministic = True
-#torch.manual_seed(42)
-#∑torch.cuda.manual_seed(42)
+    if '___ARKIV' in os.listdir():
+        main_path = "/Users/nikolaj/Fagprojekt/Data/"
+    else:
+        main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
+        
 
-if '___ARKIV' in os.listdir():
-    main_path = "/Users/nikolaj/Fagprojekt/Data/"
-else:
-    main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
-    
+    folder_path = os.path.join(main_path, "singh_cp_pipeline_singlecell_images")
+    meta_path= os.path.join(main_path, "metadata.csv")
 
-folder_path = os.path.join(main_path, "singh_cp_pipeline_singlecell_images")
-meta_path= os.path.join(main_path, "metadata.csv")
-
-trainset = BBBC(folder_path=folder_path, meta_path=meta_path, subset=subset, test=False, normalize='to_1')  
-testset = BBBC(folder_path=folder_path, meta_path=meta_path, subset=subset, test=True, normalize='to_1')
-
-
-X_train = DataLoader(
-    trainset,
-    batch_size=batch_size,
-    shuffle=True,
-)
-X_test = DataLoader(
-    testset,
-    batch_size=batch_size,
-    shuffle=True,
-)
+    trainset = BBBC(folder_path=folder_path, meta_path=meta_path, subset=subset, test=False, normalize='to_1')  
+    testset = BBBC(folder_path=folder_path, meta_path=meta_path, subset=subset, test=True, normalize='to_1')
 
 
+    X_train = DataLoader(
+        trainset,
+        batch_size=batch_size,
+        shuffle=True,
+    )
+    X_test = DataLoader(
+        testset,
+        batch_size=batch_size,
+        shuffle=True,
+    )
 
 
 
 
-VAE = VAE(
-    latent_dim=latent_dim,
-    input_dim=input_dim,
-    channels=channels,
-).to(device)
-
-if '___ARKIV' in os.listdir():
-    print("VAE:")
-    summary(VAE, input_size=(channels, input_dim, input_dim))
-
-encoder_VAE, decoder_VAE, reconstruction_errors, regularizers, latent_space = VAE.train_VAE(
-    dataloader=X_train, epochs=epochs)
-
-results_folder = 'results/'
-if not(os.path.exists(results_folder)):
-    os.mkdir(results_folder)
 
 
-torch.save(encoder_VAE, results_folder + "encoder_VAE.pt")
-torch.save(decoder_VAE, results_folder + "decoder_VAE.pt")
+    VAE = VAE(
+        latent_dim=latent_dim,
+        input_dim=input_dim,
+        channels=channels,
+    ).to(device)
 
-np.savez(results_folder + "latent_space_VAE.npz", latent_space=latent_space.cpu().detach().numpy())
-np.savez(results_folder + "reconstruction_errors_VAE.npz", reconstruction_errors=reconstruction_errors)
+    if '___ARKIV' in os.listdir():
+        print("VAE:")
+        summary(VAE, input_size=(channels, input_dim, input_dim))
 
-plt.plot(
-    np.arange(0, len(reconstruction_errors), 1),
-    reconstruction_errors,
-    label="Reconstruction Error",
-)
-plt.plot(np.arange(0, len(regularizers), 1), regularizers, label="Regularizer")
-plt.xlabel("iterationns")
-plt.title("ELBO Components")
-plt.legend()
-plt.savefig(results_folder + 'ELBO_components.png')
-plt.show()
+    encoder_VAE, decoder_VAE, reconstruction_errors, regularizers, latent_space = VAE.train_VAE(
+        dataloader=X_train, epochs=epochs)
+
+    results_folder = 'results/'
+    if not(os.path.exists(results_folder)):
+        os.mkdir(results_folder)
 
 
-def plot_reconstruction(data, name, results_folder=''):
-    generated_images = []
-    for i in range(9):
-        image = generate_image(
-            data[i]['image'],
-            encoder_VAE,
-            decoder=decoder_VAE,
-            latent_dim=latent_dim,
-            channels=channels,
-            input_dim=input_dim,
-        )
-        generated_images.append(image)
+    torch.save(encoder_VAE, results_folder + "encoder_VAE.pt")
+    torch.save(decoder_VAE, results_folder + "decoder_VAE.pt")
 
-    fig, ax = plt.subplots(9, 2)
-    for i in range(9):
-        ax[i, 0].imshow(data[i]['image'].reshape((68,68,3)), cmap="gray")
-        ax[i, 0].set_xticks([])
-        ax[i, 0].set_yticks([])
-        ax[i, 1].imshow(generated_images[i].reshape((68,68,3)), cmap="gray")
-        ax[i, 1].set_xticks([])
-        ax[i, 1].set_yticks([])
-    fig.suptitle(name)
-    plt.savefig(results_folder + name + '.png')
+    np.savez(results_folder + "latent_space_VAE.npz", latent_space=latent_space.cpu().detach().numpy())
+    np.savez(results_folder + "reconstruction_errors_VAE.npz", reconstruction_errors=reconstruction_errors)
+
+    plt.plot(
+        np.arange(0, len(reconstruction_errors), 1),
+        reconstruction_errors,
+        label="Reconstruction Error",
+    )
+    plt.plot(np.arange(0, len(regularizers), 1), regularizers, label="Regularizer")
+    plt.xlabel("iterationns")
+    plt.title("ELBO Components")
+    plt.legend()
+    plt.savefig(results_folder + 'ELBO_components.png')
     plt.show()
-    
-    
 
-plot_reconstruction(X_train.dataset, "Training_images_reconstructed", results_folder=results_folder)
-plot_reconstruction(X_test.dataset, "Test_images_reconstructed", results_folder=results_folder)
+
+    def plot_reconstruction(data, name, results_folder=''):
+        generated_images = []
+        for i in range(9):
+            image = generate_image(
+                data[i]['image'],
+                encoder_VAE,
+                decoder=decoder_VAE,
+                latent_dim=latent_dim,
+                channels=channels,
+                input_dim=input_dim,
+            )
+            generated_images.append(image)
+
+        fig, ax = plt.subplots(9, 2)
+        for i in range(9):
+            ax[i, 0].imshow(data[i]['image'].reshape((68,68,3)), cmap="gray")
+            ax[i, 0].set_xticks([])
+            ax[i, 0].set_yticks([])
+            ax[i, 1].imshow(generated_images[i].reshape((68,68,3)), cmap="gray")
+            ax[i, 1].set_xticks([])
+            ax[i, 1].set_yticks([])
+        fig.suptitle(name)
+        plt.savefig(results_folder + name + '.png')
+        plt.show()
+        
+        
+
+    plot_reconstruction(X_train.dataset, "Training_images_reconstructed", results_folder=results_folder)
+    plot_reconstruction(X_test.dataset, "Test_images_reconstructed", results_folder=results_folder)
 
