@@ -66,6 +66,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 #train_size = 20000
 #test_size = 1000
 
+latent_dims = [2**i for i in range(2,4)]
 epochs = 1
 batch_size = 1
 
