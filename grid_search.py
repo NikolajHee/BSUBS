@@ -11,7 +11,7 @@ if '___ARKIV' in os.listdir():
     from torchsummary import summary
 
 
-
+plt.style.use('fivethirtyeight')
 
 def plot_reconstruction(data, name, encoder_VAE, decoder_VAE, latent_dim, channels, input_dim, results_folder=''):
         generated_images = []
