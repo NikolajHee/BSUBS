@@ -8,7 +8,6 @@ import torch
 import os
 
 
-
 ### Following dataloader is made by the following guide on 
 # https://pytorch.org/tutorials/beginner/data_loading_tutorial.html
 
@@ -16,7 +15,8 @@ class BBBC(Dataset):
     def __init__(self, folder_path, meta_path, 
                  subset=(390716, 97679), # 1/5 of the data is test data by default
                 test=False, normalize='to_1',
-                exclude_dmso=False):
+                exclude_dmso=False,
+                shuffle=False):
         try:
             self.meta = pd.read_csv(meta_path, index_col=0)
         except:
@@ -28,7 +28,9 @@ class BBBC(Dataset):
         self.normalize = normalize  
 
         if exclude_dmso: self.exclude_dmso()
+        if shuffle: self.meta = self.meta.sample(frac=1)
         self.meta = self.meta.iloc[self.train_size:self.train_size + self.test_size, :] if self.test else self.meta.iloc[:self.train_size,:]
+        
         
     def __len__(self,):
         return self.test_size if self.test else self.train_size
@@ -93,13 +95,15 @@ if __name__ == "__main__":
                             meta_path=main_path + "metadata.csv",
                             subset=subset,
                             test=False,
-                            exclude_dmso=exclude_dmso)
+                            exclude_dmso=exclude_dmso,
+                            shuffle=True)
 
     dataset_test = BBBC(folder_path=main_path + "singh_cp_pipeline_singlecell_images",
                             meta_path=main_path + "metadata.csv",
                             subset=subset,
                             test=True,
-                            exclude_dmso=exclude_dmso)
+                            exclude_dmso=exclude_dmso,
+                            shuffle=True)
 
     X_train = DataLoader(dataset_train, batch_size=batch_size)#, shuffle=True, num_workers=0)
 

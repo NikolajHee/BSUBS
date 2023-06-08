@@ -131,7 +131,8 @@ class VAE(nn.Module):
         log_var = torch.nn.parameter.Parameter(torch.tensor([0.01]), requires_grad=True)
         var = torch.exp(log_var)
         print("var: ", var)
-        reconstruction_error = 1/(2*var) * (recon_x - x.view(-1, self.channels * self.input_dim * self.input_dim)) ** 2
+        #reconstruction_error = 1/(2*var) * (recon_x - x.view(-1, self.channels * self.input_dim * self.input_dim)) ** 2
+        reconstruction_error = 1/(2*var) * F.mse_loss(recon_x, x.view(-1, self.channels * self.input_dim * self.input_dim), reduction="none")
         reconstruction_error = reconstruction_error.sum(-1)
         reconstruction_error = reconstruction_error.to(device)
 
@@ -226,7 +227,7 @@ if __name__ == "__main__":
     input_dim = 68
     channels = 3
 
-    epochs, batch_size, latent_dim, train_size = 1, 1, 4, 10
+    #epochs, batch_size, latent_dim, train_size = 1, 1, 4, 10
 
     subset = (train_size, train_size)
 
@@ -243,17 +244,26 @@ if __name__ == "__main__":
     folder_path = os.path.join(main_path, "singh_cp_pipeline_singlecell_images")
     meta_path= os.path.join(main_path, "metadata.csv")
 
-    trainset = BBBC(folder_path=folder_path, meta_path=meta_path, subset=subset, test=False, normalize='to_1')  
-    testset = BBBC(folder_path=folder_path, meta_path=meta_path, subset=subset, test=True, normalize='to_1')
+    dataset_train = BBBC(folder_path=main_path + "singh_cp_pipeline_singlecell_images",
+                            meta_path=main_path + "metadata.csv",
+                            subset=subset,
+                            test=False,
+                            exclude_dmso=True,
+                            shuffle=True)
 
-
+    dataset_test = BBBC(folder_path=main_path + "singh_cp_pipeline_singlecell_images",
+                            meta_path=main_path + "metadata.csv",
+                            subset=subset,
+                            test=True,
+                            exclude_dmso=True,
+                            shuffle=True)
     X_train = DataLoader(
-        trainset,
+        dataset_train,
         batch_size=batch_size,
         shuffle=True,
     )
     X_test = DataLoader(
-        testset,
+        dataset_test,
         batch_size=batch_size,
         shuffle=True,
     )
