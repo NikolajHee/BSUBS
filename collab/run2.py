@@ -160,7 +160,7 @@ class VAE(nn.Module):
                 elbo, reconstruction_error, regularizer = self.forward(x)
                 reconstruction_errors.append(
                     reconstruction_error.cpu().detach().numpy())
-                regularizers.append(regularizer.detach().numpy())
+                regularizers.append(regularizer.cpu().detach().numpy())
                 elbo.backward(retain_graph=True)
                 optimizer.step()
 
