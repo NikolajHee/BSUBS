@@ -59,7 +59,7 @@ def plot_elbo(reconstruction_errors, regularizers, title, results_folder=''):
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
-latent_dims = list(np.power(2,np.arange(7,12)))
+latent_dims = [2**i for i in range(7,12)]
 epochs = 200
 batch_size = 40
 

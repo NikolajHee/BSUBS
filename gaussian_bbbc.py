@@ -91,7 +91,7 @@ class VAE(nn.Module):
         return self.decoder.forward(z)
 
     def forward(self, x, print_=False):
-        mu, log_var = self.encode(x/255)
+        mu, log_var = self.encode(x)
         z = self.reparameterization(mu, log_var)
 
         recon_x = self.decode(z)
@@ -105,7 +105,7 @@ class VAE(nn.Module):
         # recon_x = log_like.sample()
         
         # this works? like some papers say to do this
-        reconstruction_error = F.mse_loss(recon_x, x.view(-1, self.channels * self.input_dim * self.input_dim)/255, reduction="none").sum(-1)
+        reconstruction_error = F.mse_loss(recon_x, x.view(-1, self.channels * self.input_dim * self.input_dim), reduction="none").sum(-1)
         reconstruction_error = reconstruction_error.to(device)
 
         regularizer = -torch.sum(log_prior - log_posterior, dim=-1) 
