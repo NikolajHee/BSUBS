@@ -232,19 +232,19 @@ def generate_image(X, encoder, decoder, latent_dim, channels, input_dim, batch_s
     return image
 
 if __name__ == "__main__":
-    latent_dim = 500
+    latent_dim = 200
     epochs = 200
     batch_size = 40
 
-    train_size = 20000
-    test_size = 1000
+    #train_size = 20000
+    #test_size = 1000
 
     input_dim = 68
     channels = 3
 
-    epochs = 1
-    batch_size = 1
-    train_size = 10
+    epochs = 200
+    batch_size = 40
+    train_size = 20000
 
     subset = (train_size, train_size)
 
