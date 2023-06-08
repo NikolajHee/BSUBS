@@ -203,7 +203,7 @@ if __name__ == "__main__":
     train_size = 20000
     test_size = 1000
 
-    epochs, train_size, batch_size = 1, 10, 1
+    #epochs, train_size, batch_size = 1, 10, 1
 
     input_dim = 68
     channels = 3
@@ -223,8 +223,8 @@ if __name__ == "__main__":
     folder_path = os.path.join(main_path, "singh_cp_pipeline_singlecell_images")
     meta_path= os.path.join(main_path, "metadata.csv")
 
-    trainset = BBBC(folder_path=folder_path, meta_path=meta_path, subset=subset, test=False, normalize='to_1')  
-    testset = BBBC(folder_path=folder_path, meta_path=meta_path, subset=subset, test=True, normalize='to_1')
+    trainset = BBBC(folder_path=folder_path, meta_path=meta_path, subset=subset, test=False, normalize='to_1', exclude_dmso=True)  
+    testset = BBBC(folder_path=folder_path, meta_path=meta_path, subset=subset, test=True, normalize='to_1',  exclude_dmso=True)
 
 
     X_train = DataLoader(
