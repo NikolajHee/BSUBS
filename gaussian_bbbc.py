@@ -36,14 +36,33 @@ class encoder(nn.Module):
         self.input_dim = input_dim
 
         self.conv1 = nn.Conv2d(channels, 16, kernel_size=5, padding="same")
-        self.fully_connected = nn.Linear(16 * self.input_dim * self.input_dim, 2 * latent_dim)
+        self.maxpool1 = nn.MaxPool2d(kernel_size=2, stride=2)
+
+        self.conv2 = nn.Conv2d(16, 32, kernel_size=5, padding="same")
+        self.maxpool2 = nn.MaxPool2d(kernel_size=2, stride=2)
+
+        self.conv3 = nn.Conv2d(32, 64, kernel_size=5, padding="same")
+        self.maxpool3 = nn.MaxPool2d(kernel_size=2, stride=2)
+
+        self.fully_connected = nn.Linear(64 * (self.input_dim//(2**3)) * (self.input_dim//(2**3)), 2 * latent_dim)
 
     def forward(self, x):
         x = self.conv1(x)
+        x = self.maxpool1(x)
         x = nn.LeakyReLU(0.01)(x)
-        x = x.view(-1, 16 * self.input_dim * self.input_dim)
+
+        x = self.conv2(x)
+        x = self.maxpool2(x)
+        x = nn.LeakyReLU(0.01)(x)
+
+        x = self.conv3(x)
+        x = self.maxpool3(x)
+        x = nn.LeakyReLU(0.01)(x)
+        
+        x = x.view(-1, 64 * (self.input_dim//(2**3)) * (self.input_dim//(2**3)))
         x = self.fully_connected(x)
         return x
+    
 
 
 class decoder(nn.Module):
@@ -52,19 +71,43 @@ class decoder(nn.Module):
         self.input_dim = input_dim
         self.channels = channels
 
-        self.input = nn.Linear(latent_dim, 16 * self.input_dim * self.input_dim)
+        self.input = nn.Linear(latent_dim, 64 * (self.input_dim//(2**3)) * (self.input_dim//(2**3)))
+
+        self.conv1 = nn.ConvTranspose2d(
+            64, 32, kernel_size=5, stride=2, padding=6, output_padding=1
+        )
+        self.up1 = nn.Upsample(scale_factor=2, mode="nearest")
+
         self.conv2 = nn.ConvTranspose2d(
-            16, channels, kernel_size=5, stride=1, padding=5 - (self.input_dim % 5))
+            32, 16, kernel_size=5, stride=2, padding=9
+        )
+        self.up2 = nn.Upsample(scale_factor=2, mode="nearest")
+
+        self.conv3 = nn.ConvTranspose2d(
+            16, 3, kernel_size=5, stride=1, padding=2
+            )
+        self.up3 = nn.Upsample(scale_factor=2, mode="nearest")
+
         
         #self.softmax = nn.Softmax(dim=1)  
         #self.softmax = nn.Sigmoid()
 
     def forward(self, x):
         x = self.input(x)
+
+        x = x.view(-1, 64, self.input_dim//(2**3), self.input_dim//(2**3))
+        x = self.conv1(x)
+        x = self.up1(x)
         x = nn.LeakyReLU(0.01)(x)
-        x = x.view(-1, 16, self.input_dim, self.input_dim)
+
         x = self.conv2(x)
+        x = self.up2(x)
         x = nn.LeakyReLU(0.01)(x)
+
+        x = self.conv3(x)
+        x = self.up3(x)
+        x = nn.LeakyReLU(0.01)(x)
+
         x = x.view(-1, self.channels * self.input_dim * self.input_dim)
         #x = self.softmax(x) # i dont think this is needed.. but maybe?
         return x
@@ -198,6 +241,10 @@ if __name__ == "__main__":
 
     input_dim = 68
     channels = 3
+
+    epochs = 1
+    batch_size = 1
+    train_size = 10
 
     subset = (train_size, train_size)
 
