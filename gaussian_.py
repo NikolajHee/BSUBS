@@ -177,10 +177,10 @@ def generate_image(X, vae, latent_dim, channels, input_dim, batch_size=1):
     vae.eval()
     X = X.to(device)
     mu, log_var = vae.encode(X)
-    eps = torch.normal(mean=0, std=torch.ones(latent_dim))
+    eps = torch.normal(mean=0, std=torch.ones(latent_dim)).to(device)
     z = mu + torch.exp(0.5 * log_var) * eps
     mean, std = vae.decode(z)
-    image = torch.normal(mean=mean, std=std)
+    image = torch.normal(mean=mean, std=std).to(device)
     image = image.view(channels, input_dim, input_dim)
     image = image.clip(0,1).detach().cpu().numpy()
     return image
