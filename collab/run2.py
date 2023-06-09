@@ -112,12 +112,14 @@ class VAE(nn.Module):
         #decode_mu, decode_std = self.decode(z)
         decode_mu = self.decode(z)
         recon_x = torch.normal(mean=decode_mu, std=0.01)
+        ## tqdm.write(str(recon_x.sum(-1).detach().numpy()))
 
         log_posterior = log_Normal(z, mu, log_var)
         log_prior = log_standard_Normal(z)
 
-        reconstruction_error = F.mse_loss(
-            recon_x, x.view(-1, self.channels * self.input_dim * self.input_dim), reduction="none").sum(-1)
+        #reconstruction_error = F.mse_loss(
+        #    recon_x, x.view(-1, self.channels * self.input_dim * self.input_dim), reduction="none").sum(-1)
+        reconstruction_error = ((x.flatten(start_dim=1,end_dim=-1) - recon_x)**2).mean(-1)
         reconstruction_error = reconstruction_error.to(device)
 
         regularizer = -torch.sum(log_prior - log_posterior, dim=-1)
@@ -154,7 +156,7 @@ class VAE(nn.Module):
         reconstruction_errors = []
         regularizers = []
 
-        # self.initialise()
+        self.initialise()
         self.train()
         for epoch in tqdm(range(epochs)):
             for batch in tqdm(dataloader):
@@ -204,12 +206,12 @@ def generate_image(X, encoder, decoder, latent_dim, channels, input_dim, batch_s
 if __name__ == "__main__":
     latent_dim = 128
     epochs = 200
-    batch_size = 40
+    batch_size = 100
 
     train_size = 10000
     test_size = 1000
 
-    # epochs, train_size, batch_size = 1, 10, 1
+    epochs, train_size, batch_size = 1, 10, 1
 
     input_dim = 68
     channels = 3
