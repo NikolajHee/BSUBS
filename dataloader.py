@@ -42,7 +42,7 @@ class BBBC(Dataset):
 
     def normalize_to_1(self, x):
         # helper function to normalize to [0...1]
-        to_1 = (x/np.max(x))
+        to_1 = ((x-np.min(x,axis=(0,1)))/np.max(x,axis=(0,1)))
         return to_1.astype(np.float32).reshape((3,68,68))   
     
     def exclude_dmso(self):
@@ -72,7 +72,7 @@ class BBBC(Dataset):
                   }
 
         return sample
-
+#3284
 
 if __name__ == "__main__":
     batch_size = 5
@@ -112,6 +112,15 @@ if __name__ == "__main__":
 
 
     # plot number of batches of size batch_size in one plot
+
+    for i, batch in enumerate(X_train):
+        for j, sample in enumerate(batch["image"]):
+            plt.imshow(sample.reshape(68,68,3), cmap="gray")
+            plt.title("batch: {}, image: {}".format(i,batch['idx'][j]))
+            plt.axis("off")
+            plt.show()
+            print('abe')
+
 
     num_batches = 5
 

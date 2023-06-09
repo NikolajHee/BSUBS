@@ -178,21 +178,21 @@ def generate_image(X, vae, latent_dim, channels, input_dim, batch_size=1):
     mu, log_var = vae.encode(X)
     eps = torch.normal(mean=0, std=torch.ones(latent_dim)).to(device)
     z = mu + torch.exp(0.5 * log_var) * eps
-    mean, std = vae.decode(z)
-    image = torch.normal(mean=mean, std=std).to(device)
+    image, std = vae.decode(z)
+    #image = torch.normal(mean=mean, std=std).to(device)
     image = image.view(channels, input_dim, input_dim)
     image = image.clip(0,1).detach().cpu().numpy()
     return image
 
 
-latent_dim = 128
+latent_dim = 300
 epochs = 200
-batch_size = 40
+batch_size = 200
 
 input_dim = 68
 channels = 3
 
-train_size = 20000
+train_size = 40000
 test_size = 1000
 
 # torch.backends.cudnn.deterministic = True
@@ -202,7 +202,8 @@ test_size = 1000
 from dataloader import BBBC
 
 main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
-exclude_dmso = True
+exclude_dmso = False
+shuffle = False
 
 subset = (train_size, test_size)
 
@@ -211,14 +212,14 @@ dataset_train = BBBC(folder_path=main_path + "singh_cp_pipeline_singlecell_image
                         subset=subset,
                         test=False,
                         exclude_dmso=exclude_dmso,
-                        shuffle=True)
+                        shuffle=False)
 
 dataset_test = BBBC(folder_path=main_path + "singh_cp_pipeline_singlecell_images",
                         meta_path=main_path + "metadata.csv",
                         subset=subset,
                         test=True,
                         exclude_dmso=exclude_dmso,
-                        shuffle=True)
+                        shuffle=False)
 
 
 X_train = DataLoader(dataset_train, batch_size=batch_size, shuffle=True)
