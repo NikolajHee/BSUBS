@@ -67,8 +67,8 @@ torch.cuda.manual_seed(42)
 
 from dataloader import BBBC
 
-#main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
-main_path = "/Users/nikolaj/Fagprojekt/Data/"
+main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
+#main_path = "/Users/nikolaj/Fagprojekt/Data/"
 
 
 exclude_dmso = False
