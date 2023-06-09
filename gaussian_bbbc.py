@@ -129,7 +129,7 @@ class VAE(nn.Module):
         # this works? like some papers say to do this
         #reconstruction_error = F.mse_loss(recon_x, x.view(-1, self.channels * self.input_dim * self.input_dim), reduction="none").sum(-1)
         log_var = torch.nn.parameter.Parameter(torch.tensor([0.01]), requires_grad=True)
-        var = torch.exp(log_var)
+        var = torch.exp(log_var).to(device)
         print("var: ", var)
         #reconstruction_error = 1/(2*var) * (recon_x - x.view(-1, self.channels * self.input_dim * self.input_dim)) ** 2
         reconstruction_error = 1/(2*var) * F.mse_loss(recon_x, x.view(-1, self.channels * self.input_dim * self.input_dim), reduction="none")
@@ -227,7 +227,7 @@ if __name__ == "__main__":
     input_dim = 68
     channels = 3
 
-    #epochs, batch_size, latent_dim, train_size = 1, 1, 4, 10
+    epochs, batch_size, latent_dim, train_size = 1, 1, 4, 10
 
     subset = (train_size, train_size)
 
