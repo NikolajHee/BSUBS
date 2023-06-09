@@ -208,7 +208,7 @@ def generate_image(X, vae, latent_dim, channels, input_dim, batch_size=1):
 
 
 latent_dim = 200
-epochs = 100
+epochs = 200
 batch_size = 100
 
 input_dim = 68
@@ -217,7 +217,7 @@ channels = 3
 train_size = 20000
 test_size = 1000
 
-epochs, batch_size, train_size = 1, 1, 10
+#epochs, batch_size, train_size = 1, 1, 10
 
 # torch.backends.cudnn.deterministic = True
 # torch.manual_seed(42)
@@ -225,8 +225,8 @@ epochs, batch_size, train_size = 1, 1, 10
 
 from dataloader import BBBC
 
-main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
-#main_path = "/Users/nikolaj/Fagprojekt/Data/"
+#main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
+main_path = "/Users/nikolaj/Fagprojekt/Data/"
 
 
 exclude_dmso = False
