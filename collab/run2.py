@@ -56,7 +56,7 @@ class decoder(nn.Module):
         self.channels = channels
 
         self.input = nn.Linear(
-            latent_dim, 2 * 32 * self.input_dim * self.input_dim)
+            latent_dim,  32 * self.input_dim * self.input_dim)
         self.conv1 = nn.ConvTranspose2d(
             32, 16, kernel_size=5, stride=1, padding=5 - (self.input_dim % 5)
         )
@@ -73,7 +73,7 @@ class decoder(nn.Module):
         x = nn.functional.relu(x)
         x = self.conv2(x)
         x = nn.functional.relu(x)
-        x = x.view(-1, self.channels * 2 * self.input_dim * self.input_dim)
+        x = x.view(-1, self.channels * self.input_dim * self.input_dim)
         #x = self.softmax(x)
         return x
 
@@ -98,6 +98,8 @@ class VAE(nn.Module):
         return mu + torch.exp(0.5 * log_var) * eps
 
     def decode(self, z):
+        return self.decoder.forward(z)
+    
         mu, log_var = torch.split(
             self.decoder.forward(z), self.channels * self.input_dim * self.input_dim, dim=1)
         std = torch.exp(0.5 * log_var)
@@ -107,8 +109,9 @@ class VAE(nn.Module):
         mu, log_var = self.encode(x)
         z = self.reparameterization(mu, log_var)
 
-        decode_mu, decode_std = self.decode(z)
-        recon_x = torch.normal(mean=decode_mu, std=decode_std)
+        #decode_mu, decode_std = self.decode(z)
+        decode_mu = self.decode(z)
+        recon_x = torch.normal(mean=decode_mu, std=0.01)
 
         log_posterior = log_Normal(z, mu, log_var)
         log_prior = log_standard_Normal(z)
