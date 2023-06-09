@@ -9,8 +9,6 @@ from tqdm import tqdm
 import os
 
 
-# todo: latent space
-# todo: grid search
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -122,7 +120,7 @@ class VAE(nn.Module):
         std = torch.exp(0.5 * log_var)
         return mu, std
 
-    def forward(self, x):
+    def forward(self, x, save_latent = False):
         mu, log_var = self.encode(x)
         z = self.reparameterization(mu, log_var)
 
@@ -144,7 +142,7 @@ class VAE(nn.Module):
         tqdm.write(
             f"ELBO: {elbo.item()}, Reconstruction error: {reconstruction_error.item()}, Regularizer: {regularizer.item()}")
 
-        return elbo, reconstruction_error, regularizer
+        return (elbo, reconstruction_error, regularizer) if not save_latent else (elbo, reconstruction_error, regularizer, z)
 
     def initialise(self):
         def _init_weights(m):
