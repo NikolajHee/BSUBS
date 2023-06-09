@@ -1,4 +1,5 @@
 import os
+import sys
 from dataloader import BBBC
 from torch.utils.data import DataLoader
 from gaussian_bbbc import VAE, generate_image, log_Normal, log_standard_Normal, encoder, decoder
@@ -9,6 +10,10 @@ import matplotlib.pyplot as plt
 from torch.utils.data import Dataset
 if '___ARKIV' in os.listdir():
     from torchsummary import summary
+
+
+latent_dim = sys.argv[1]
+latent_dim = int(latent_dim)
 
 
 plt.style.use('fivethirtyeight')
@@ -59,20 +64,11 @@ def plot_elbo(reconstruction_errors, regularizers, title, results_folder=''):
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
-latent_dims = [2**i for i in range(7,12)]
 epochs = 200
 batch_size = 40
 
 train_size = 20000
 test_size = 1000
-
-# latent_dims = [2**i for i in range(2,4)]
-# epochs = 1
-# batch_size = 1
-
-# train_size = 10
-# test_size = 10
-
 
 input_dim = 68
 channels = 3
@@ -89,17 +85,27 @@ else:
 folder_path = os.path.join(main_path, "singh_cp_pipeline_singlecell_images")
 meta_path= os.path.join(main_path, "metadata.csv")
 
-trainset = BBBC(folder_path=folder_path, meta_path=meta_path, subset=subset, test=False, normalize='to_1')  
-testset = BBBC(folder_path=folder_path, meta_path=meta_path, subset=subset, test=True, normalize='to_1')
+dataset_train = BBBC(folder_path=main_path + "singh_cp_pipeline_singlecell_images",
+                            meta_path=main_path + "metadata.csv",
+                            subset=subset,
+                            test=False,
+                            exclude_dmso=True,
+                            shuffle=True)
 
+dataset_test = BBBC(folder_path=main_path + "singh_cp_pipeline_singlecell_images",
+                            meta_path=main_path + "metadata.csv",
+                            subset=subset,
+                            test=True,
+                            exclude_dmso=True,
+                            shuffle=True)
 
 X_train = DataLoader(
-    trainset,
+    dataset_train,
     batch_size=batch_size,
     shuffle=True,
 )
 X_test = DataLoader(
-    testset,
+    dataset_test,
     batch_size=batch_size,
     shuffle=True,
 )
@@ -107,34 +113,34 @@ X_test = DataLoader(
 print("sucessfully initialized dataloader")
 
 
-for i, latent_dim in enumerate(latent_dims):
-    name = "L=" + str(latent_dim) + ". "
-    print(name)
 
-    VAE_ = VAE(
-        latent_dim=latent_dim,
-        input_dim=input_dim,
-        channels=channels,
-    ).to(device)
+name = "L=" + str(latent_dim) + ". "
+print(name)
 
-    if '___ARKIV' in os.listdir():
-        print("VAE:")
-        summary(VAE_, input_size=(channels, input_dim, input_dim))
+VAE_ = VAE(
+    latent_dim=latent_dim,
+    input_dim=input_dim,
+    channels=channels,
+).to(device)
 
-    encoder_VAE, decoder_VAE, reconstruction_errors, regularizers, latent_space = VAE_.train_VAE(
-        dataloader=X_train, epochs=epochs)
+if '___ARKIV' in os.listdir():
+    print("VAE:")
+    summary(VAE_, input_size=(channels, input_dim, input_dim))
+
+encoder_VAE, decoder_VAE, reconstruction_errors, regularizers, latent_space = VAE_.train_VAE(
+    dataloader=X_train, epochs=epochs)
+
+
+#* Save results
+
+results_folder = 'results/'
+if not(os.path.exists(results_folder)):
+    os.mkdir(results_folder)
     
+plot_elbo(reconstruction_errors, regularizers, name + "ELBO", results_folder=results_folder)
+plot_reconstruction(X_train.dataset, name + "train reconstruction", encoder_VAE, decoder_VAE, latent_dim, channels, input_dim, results_folder=results_folder)
+plot_reconstruction(X_test.dataset, name + "test reconstruction", encoder_VAE, decoder_VAE, latent_dim, channels, input_dim, results_folder=results_folder)
 
-    #* Save results
+print("sucessfully saved results for " + name)
 
-    results_folder = 'results/'
-    if not(os.path.exists(results_folder)):
-        os.mkdir(results_folder)
-     
-    plot_elbo(reconstruction_errors, regularizers, name + "ELBO", results_folder=results_folder)
-    plot_reconstruction(X_train.dataset, name + "train reconstruction", encoder_VAE, decoder_VAE, latent_dim, channels, input_dim, results_folder=results_folder)
-    plot_reconstruction(X_test.dataset, name + "test reconstruction", encoder_VAE, decoder_VAE, latent_dim, channels, input_dim, results_folder=results_folder)
-    
-    print("sucessfully saved results for " + name)
-    
-    
+
