@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
-from torchsummary import summary
+#from torchsummary import summary
 from tqdm import tqdm
 import os
 
@@ -226,7 +226,7 @@ epochs, batch_size, train_size = 1, 1, 10
 from dataloader import BBBC
 
 main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
-main_path = "/Users/nikolaj/Fagprojekt/Data/"
+#main_path = "/Users/nikolaj/Fagprojekt/Data/"
 
 
 exclude_dmso = False
@@ -258,8 +258,8 @@ VAE = VAE(
     channels=channels,
 ).to(device)
 
-print("VAE:")
-summary(VAE, input_size=(channels, input_dim, input_dim))
+#print("VAE:")
+#summary(VAE, input_size=(channels, input_dim, input_dim))
 
 encoder_VAE, decoder_VAE, reconstruction_errors, regularizers, latent_space = VAE.train_VAE(
     dataloader=X_train, epochs=epochs)
