@@ -188,9 +188,9 @@ def generate_image(X, encoder, decoder, latent_dim, channels, input_dim, batch_s
     mu, log_var = VAE.encode(X)
     eps = torch.normal(mean=0, std=torch.ones(latent_dim)).to(device)
     z = mu + torch.exp(0.5 * log_var) * eps
-    mean, log_var = VAE.decode(z)
+    mean = VAE.decode(z)
 
-    log_like = torch.normal(mean=mean, std=log_var).to(device)
+    log_like = torch.normal(mean=mean, std=0.01).to(device)
     recon_x = log_like
     image = recon_x.reshape((channels, input_dim, input_dim))
     image = image.cpu().detach().numpy()
@@ -207,7 +207,7 @@ if __name__ == "__main__":
     train_size = 10000
     test_size = 1000
 
-    #epochs, train_size, batch_size = 1, 10, 1
+    epochs, train_size, batch_size = 1, 10, 1
 
     input_dim = 68
     channels = 3
