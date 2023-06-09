@@ -50,11 +50,11 @@ class decoder(nn.Module):
         self.channels = channels
 
         self.input = nn.Linear(
-            latent_dim, 2 * 16 * self.input_dim * self.input_dim)
+            latent_dim,  16 * self.input_dim * self.input_dim)
         self.conv2 = nn.ConvTranspose2d(
             16, channels, kernel_size=5, stride=1, padding=5 - (self.input_dim % 5))
-        #self.output = nn.Linear(channels * self.input_dim * self.input_dim,
-        #                        2 * channels * self.input_dim * self.input_dim)
+        self.output = nn.Linear(channels * self.input_dim * self.input_dim,
+                                2 * channels * self.input_dim * self.input_dim)
 
         # self.softmax = nn.Softmax(dim=1)
         # self.softmax = nn.Sigmoid()
@@ -65,9 +65,9 @@ class decoder(nn.Module):
         x = x.view(-1, 16, self.input_dim, self.input_dim)
         x = self.conv2(x)
         x = nn.LeakyReLU(0.01)(x)
-        x = x.view(-1, 2 * self.channels * self.input_dim * self.input_dim)
-        #x = self.output(x)
-        #x = nn.LeakyReLU(0.01)(x)
+        x = x.view(-1,  self.channels * self.input_dim * self.input_dim)
+        x = self.output(x)
+        x = nn.LeakyReLU(0.01)(x)
         # x = self.softmax(x) # i dont think this is needed.. but maybe?
         return x
 
@@ -203,6 +203,8 @@ test_size = 1000
 from dataloader import BBBC
 
 main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
+main_path = "/Users/nikolaj/Fagprojekt/Data/"
+
 exclude_dmso = False
 shuffle = False
 
@@ -245,7 +247,7 @@ encoder_VAE, decoder_VAE, reconstruction_errors, regularizers, latent_space = VA
 
 
 
-results_folder = 'results/'
+results_folder = 'results1/'
 if not(os.path.exists(results_folder)):
     os.mkdir(results_folder)
 

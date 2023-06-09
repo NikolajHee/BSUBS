@@ -271,7 +271,7 @@ encoder_VAE, decoder_VAE, reconstruction_errors, regularizers, latent_space = VA
 
 
 
-results_folder = 'results/'
+results_folder = 'results2/'
 if not(os.path.exists(results_folder)):
     os.mkdir(results_folder)
 
