@@ -34,7 +34,7 @@ class FeatureExtractor(VAE):
 
                 if save_latent:
                     elbo, RE, KL, z = self.forward(x, save_latent=save_latent)
-                    z = z.detach().numpy()
+                    z = z.cpu().detach().numpy()
                     latent[i*dataloader.batch_size:(i+1)*dataloader.batch_size, :] = z
 
                 else:
