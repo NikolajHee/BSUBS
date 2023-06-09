@@ -108,7 +108,7 @@ class VAE(nn.Module):
         log_prior = log_standard_Normal(z)
 
 
-        log_like = (1 / (2 * (decode_std+ 1e-6)) * nn.functional.mse_loss(decode_mu, x.flatten(
+        log_like = (1 / (2 * (decode_std)) * nn.functional.mse_loss(decode_mu, x.flatten(
             start_dim=1, end_dim=-1), reduction="none"))
 
         reconstruction_error = torch.sum(log_like, dim=-1).mean()
