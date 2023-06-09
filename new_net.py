@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
-#from torchsummary import summary
+from torchsummary import summary
 from tqdm import tqdm
 import os
 
@@ -26,57 +26,77 @@ def log_standard_Normal(x):
 
 
 class encoder(nn.Module):
-    def __init__(self, input_dim, latent_dim, channels):
+    def __init__(self, input_dim, latent_dim, channels, hidden_channels, leaky_relu_slope=0.01):
         super(encoder, self).__init__()
-        self.input_dim = input_dim
+        #* encoder layers
+        self.hidden_channels = hidden_channels
 
-        self.conv1 = nn.Conv2d(channels, 16, kernel_size=5, padding="same")
-        self.fully_connected = nn.Linear(
-            16 * self.input_dim * self.input_dim, 2 * latent_dim)
+        # loop over hidden channels
+        save = []
+        for h in self.hidden_channels:
+            save.append(nn.Sequential(
+                nn.Conv2d(channels, out_channels=h, kernel_size=3, stride=2, padding=1),
+                nn.BatchNorm2d(h),
+                nn.LeakyReLU(leaky_relu_slope)
+            ))
+            channels = h
+        
+        self.encoder = nn.Sequential(*save)
+        # final layer
+        self.to_latent = nn.Sequential(nn.Linear(self.hidden_channels[-1]*9*9, latent_dim * 2),
+                                       nn.LeakyReLU(leaky_relu_slope))
 
     def forward(self, x):
-        x = self.conv1(x)
-        x = nn.LeakyReLU(0.01)(x)
-        x = x.view(-1, 16 * self.input_dim * self.input_dim)
-        x = self.fully_connected(x)
-        x = nn.LeakyReLU(0.01)(x)
+        x = self.encoder(x)
+        x = x.view(-1, self.hidden_channels[-1] * x.shape[-1] * x.shape[-1])
+        x = self.to_latent(x)
         return x
 
 
 class decoder(nn.Module):
-    def __init__(self, input_dim, latent_dim, channels):
+    def __init__(self, input_dim, latent_dim, channels, hidden_channels, leaky_relu_slope=0.01):
         super(decoder, self).__init__()
+
+        self.channnels = channels
         self.input_dim = input_dim
-        self.channels = channels
+        self.hidden_channels = hidden_channels
 
-        self.input = nn.Linear(
-            latent_dim, 2 * 16 * self.input_dim * self.input_dim)
-        self.conv2 = nn.ConvTranspose2d(
-            16, channels, kernel_size=5, stride=1, padding=5 - (self.input_dim % 5))
-        #self.output = nn.Linear(channels * self.input_dim * self.input_dim,
-        #                        2 * channels * self.input_dim * self.input_dim)
 
-        # self.softmax = nn.Softmax(dim=1)
-        # self.softmax = nn.Sigmoid()
+        #* decoder layers
+        self.from_latent = nn.Linear(latent_dim, hidden_channels[0]*9*9)
+
+        # loop over hidden channels
+        save = []
+
+        for i in range(len(hidden_channels) -1):
+            save.append(nn.Sequential(
+                nn.ConvTranspose2d(in_channels=hidden_channels[i], out_channels=hidden_channels[i+1], kernel_size=3, stride=2, padding=1, output_padding=1),
+                nn.BatchNorm2d(hidden_channels[i+1]),
+                nn.LeakyReLU(leaky_relu_slope)
+            ))
+        
+        self.decoder = nn.Sequential(*save)
+
+        # final layer
+        self.final = nn.Sequential(
+            nn.ConvTranspose2d(in_channels=hidden_channels[-1], out_channels=channels, kernel_size=3, stride=2, padding=3, output_padding=1),
+            nn.Flatten(start_dim=1),
+            #nn.Softmax(dim=1)
+        )
 
     def forward(self, x):
-        x = self.input(x)
-        x = nn.LeakyReLU(0.01)(x)
-        x = x.view(-1, 16, self.input_dim, self.input_dim)
-        x = self.conv2(x)
-        x = nn.LeakyReLU(0.01)(x)
-        x = x.view(-1, 2 * self.channels * self.input_dim * self.input_dim)
-        #x = self.output(x)
-        #x = nn.LeakyReLU(0.01)(x)
-        # x = self.softmax(x) # i dont think this is needed.. but maybe?
+        x = self.from_latent(x)
+        x = x.view(-1, self.hidden_channels[0], 9, 9)
+        x = self.decoder(x)
+        x = self.final(x)
         return x
 
 
 class VAE(nn.Module):
-    def __init__(self, latent_dim, input_dim, channels):
+    def __init__(self, latent_dim, input_dim, channels, hidden_channels: list=[8, 16, 32]):
         super(VAE, self).__init__()
-        self.encoder = encoder(input_dim, latent_dim, channels)
-        self.decoder = decoder(input_dim, latent_dim, channels)
+        self.encoder = encoder(input_dim, latent_dim, channels, hidden_channels)
+        self.decoder = decoder(input_dim, latent_dim, channels, [i for i in reversed(hidden_channels)])
         self.latent_dim = latent_dim
         self.channels = channels
         self.input_dim = input_dim
@@ -93,6 +113,7 @@ class VAE(nn.Module):
         return mu + torch.exp(0.5 * log_var) * self.eps
 
     def decode(self, z):
+        return self.decoder.forward(z)
         mu, log_var = torch.split(
             self.decoder.forward(z), self.channels * self.input_dim * self.input_dim, dim=1)
         std = torch.exp(0.5 * log_var)
@@ -102,8 +123,9 @@ class VAE(nn.Module):
         mu, log_var = self.encode(x)
         z = self.reparameterization(mu, log_var)
 
-        decode_mu, decode_std = self.decode(z)
-        # decode_std = 0.1 * torch.ones(decode_mu.shape).to(device)
+        #decode_mu, decode_std = self.decode(z)
+        decode_mu = self.decode(z)
+        decode_std = 0.1 * torch.ones(decode_mu.shape).to(device)
         log_posterior = log_Normal(z, mu, log_var)
         log_prior = log_standard_Normal(z)
 
@@ -112,7 +134,7 @@ class VAE(nn.Module):
             start_dim=1, end_dim=-1), reduction="none"))
 
         reconstruction_error = torch.sum(log_like, dim=-1).mean()
-        regularizer = - torch.sum(log_prior - log_posterior, dim=-1).mean() 
+        regularizer = - torch.sum(log_prior - log_posterior, dim=-1).mean()
 
         elbo = reconstruction_error + regularizer
 
@@ -175,11 +197,11 @@ class VAE(nn.Module):
 def generate_image(X, vae, latent_dim, channels, input_dim, batch_size=1):
     vae.eval()
     X = X.to(device)
-    mu, log_var = vae.encode(X)
+    mu, log_var = vae.encode(X.view(batch_size, channels, input_dim, input_dim))
     eps = torch.normal(mean=0, std=torch.ones(latent_dim)).to(device)
     z = mu + torch.exp(0.5 * log_var) * eps
-    mean, std = vae.decode(z)
-    image = torch.normal(mean=mean, std=std).to(device)
+    mean = vae.decode(z)
+    image = torch.normal(mean=mean, std=0.1).to(device)
     image = image.view(channels, input_dim, input_dim)
     image = image.clip(0,1).detach().cpu().numpy()
     return image
@@ -187,7 +209,7 @@ def generate_image(X, vae, latent_dim, channels, input_dim, batch_size=1):
 
 latent_dim = 200
 epochs = 100
-batch_size = 40
+batch_size = 100
 
 input_dim = 68
 channels = 3
@@ -195,6 +217,7 @@ channels = 3
 train_size = 20000
 test_size = 1000
 
+epochs, batch_size, train_size = 1, 1, 10
 
 # torch.backends.cudnn.deterministic = True
 # torch.manual_seed(42)
@@ -203,6 +226,9 @@ test_size = 1000
 from dataloader import BBBC
 
 main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
+main_path = "/Users/nikolaj/Fagprojekt/Data/"
+
+
 exclude_dmso = False
 shuffle = False
 
@@ -232,8 +258,8 @@ VAE = VAE(
     channels=channels,
 ).to(device)
 
-#print("VAE:")
-##summary(VAE, input_size=(channels, input_dim, input_dim))
+print("VAE:")
+summary(VAE, input_size=(channels, input_dim, input_dim))
 
 encoder_VAE, decoder_VAE, reconstruction_errors, regularizers, latent_space = VAE.train_VAE(
     dataloader=X_train, epochs=epochs)
