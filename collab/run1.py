@@ -207,7 +207,7 @@ if __name__ == "__main__":
     train_size = 10000
     test_size = 1000
 
-    epochs, train_size, batch_size = 1, 10, 1
+    # epochs, train_size, batch_size = 1, 10, 1
 
     input_dim = 68
     channels = 3
