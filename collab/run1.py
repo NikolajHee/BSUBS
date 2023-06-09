@@ -54,7 +54,7 @@ class decoder(nn.Module):
         self.channels = channels
 
         self.input = nn.Linear(
-            latent_dim, 2 * 16 * self.input_dim * self.input_dim)
+            latent_dim,  16 * self.input_dim * self.input_dim)
         self.conv2 = nn.ConvTranspose2d(
             16, channels, kernel_size=5, stride=1, padding=5 - (self.input_dim % 5))
         #self.output = nn.Linear(channels * self.input_dim * self.input_dim,
@@ -69,7 +69,7 @@ class decoder(nn.Module):
         x = x.view(-1, 16, self.input_dim, self.input_dim)
         x = self.conv2(x)
         x = nn.LeakyReLU(0.01)(x)
-        x = x.view(-1, self.channels * self.input_dim * self.input_dim * 2)
+        x = x.view(-1, self.channels * self.input_dim * self.input_dim)
         #x = self.output(x)
         #x = nn.LeakyReLU(0.01)(x)
         # x = self.softmax(x) # i dont think this is needed.. but maybe?
@@ -95,6 +95,8 @@ class VAE(nn.Module):
         return mu + torch.exp(0.5 * log_var) * eps
 
     def decode(self, z):
+        return self.decoder.forward(z)
+    
         mu, log_var = torch.split(
             self.decoder.forward(z), self.channels * self.input_dim * self.input_dim, dim=1)
         std = torch.exp(0.5 * log_var)
@@ -104,8 +106,10 @@ class VAE(nn.Module):
         mu, log_var = self.encode(x)
         z = self.reparameterization(mu, log_var)
 
-        decode_mu, decode_std = self.decode(z)
-        recon_x = torch.normal(mean=decode_mu, std=decode_std)
+        #decode_mu, decode_std = self.decode(z)
+        decode_mu = self.decode(z)
+        recon_x = torch.normal(mean=decode_mu, std=0.01)
+        #print(decode_std.mean())
 
         log_posterior = log_Normal(z, mu, log_var)
         log_prior = log_standard_Normal(z)
@@ -200,7 +204,7 @@ if __name__ == "__main__":
     epochs = 200
     batch_size = 40
 
-    train_size = 20000
+    train_size = 10000
     test_size = 1000
 
     #epochs, train_size, batch_size = 1, 10, 1
