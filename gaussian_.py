@@ -185,14 +185,14 @@ def generate_image(X, vae, latent_dim, channels, input_dim, batch_size=1):
     return image
 
 
-latent_dim = 300
+latent_dim = 200
 epochs = 200
-batch_size = 200
+batch_size = 100
 
 input_dim = 68
 channels = 3
 
-train_size = 40000
+train_size = 20000
 test_size = 1000
 
 # torch.backends.cudnn.deterministic = True
