@@ -57,9 +57,9 @@ input_dim = 68
 channels = 3
 
 train_size = 30000
-test_size = 1000
+test_size = 10000
 
-epochs, batch_size, train_size = 2, 2, 100
+#epochs, batch_size, train_size = 2, 2, 100
 
 torch.backends.cudnn.deterministic = True
 torch.manual_seed(42)

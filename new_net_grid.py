@@ -17,8 +17,6 @@ latent_dims = [150, 200, 250, 300]
 
 latent_dim = latent_dims[index] 
 
-# todo: latent space
-
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 epochs = 200
@@ -30,7 +28,7 @@ channels = 3
 train_size = 30000
 test_size = 1000
 
-epochs, batch_size, train_size = 2, 1, 100
+#epochs, batch_size, train_size = 2, 1, 100
 
 torch.backends.cudnn.deterministic = True
 torch.manual_seed(42)
