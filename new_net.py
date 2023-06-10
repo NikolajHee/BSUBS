@@ -295,14 +295,14 @@ if __name__ == "__main__":
     encoder_VAE, decoder_VAE, REs, KLs, ELBOs = VAE.train_VAE(
         dataloader=X_train, epochs=epochs)
 
-    # torch.save(encoder_VAE, "encoder_VAE.pt")
-    # torch.save(decoder_VAE, "decoder_VAE.pt")
+    torch.save(encoder_VAE, "encoder_VAE.pt")
+    torch.save(decoder_VAE, "decoder_VAE.pt")
 
     # np.savez("latent_space_VAE.npz", latent_space=latent_space.detach().numpy())
 
 
 
-    results_folder = 'results2/'
+    results_folder = 'new_net/'
     if not(os.path.exists(results_folder)):
         os.mkdir(results_folder)
 

@@ -50,11 +50,11 @@ class decoder(nn.Module):
         self.channels = channels
 
         self.input = nn.Linear(
-            latent_dim,  16 * self.input_dim * self.input_dim)
+            latent_dim,  2 * 16 * self.input_dim * self.input_dim)
         self.conv2 = nn.ConvTranspose2d(
             16, channels, kernel_size=5, stride=1, padding=5 - (self.input_dim % 5))
-        self.output = nn.Linear(channels * self.input_dim * self.input_dim,
-                                2 * channels * self.input_dim * self.input_dim)
+        #self.output = nn.Linear(channels * self.input_dim * self.input_dim,
+        #                        2 * channels * self.input_dim * self.input_dim)
 
         # self.softmax = nn.Softmax(dim=1)
         # self.softmax = nn.Sigmoid()
@@ -65,9 +65,9 @@ class decoder(nn.Module):
         x = x.view(-1, 16, self.input_dim, self.input_dim)
         x = self.conv2(x)
         x = nn.LeakyReLU(0.01)(x)
-        x = x.view(-1,  self.channels * self.input_dim * self.input_dim)
-        x = self.output(x)
-        x = nn.LeakyReLU(0.01)(x)
+        x = x.view(-1,  2 * self.channels * self.input_dim * self.input_dim)
+        #x = self.output(x)
+        #x = nn.LeakyReLU(0.01)(x)
         # x = self.softmax(x) # i dont think this is needed.. but maybe?
         return x
 
@@ -102,14 +102,15 @@ class VAE(nn.Module):
         mu, log_var = self.encode(x)
         z = self.reparameterization(mu, log_var)
 
-        decode_mu, decode_std = self.decode(z)
+        decode_mu, decode_var = self.decode(z)
         # decode_std = 0.1 * torch.ones(decode_mu.shape).to(device)
         log_posterior = log_Normal(z, mu, log_var)
         log_prior = log_standard_Normal(z)
 
 
-        log_like = (1 / (2 * (decode_std)) * nn.functional.mse_loss(decode_mu, x.flatten(
+        log_like = (1 / (2 * (decode_var)) * nn.functional.mse_loss(decode_mu, x.flatten(
             start_dim=1, end_dim=-1), reduction="none"))
+        #print(decode_var)
 
         reconstruction_error = torch.sum(log_like, dim=-1).mean()
         regularizer = - torch.sum(log_prior - log_posterior, dim=-1).mean() 
@@ -179,7 +180,7 @@ def generate_image(X, vae, latent_dim, channels, input_dim, batch_size=1):
     eps = torch.normal(mean=0, std=torch.ones(latent_dim)).to(device)
     z = mu + torch.exp(0.5 * log_var) * eps
     mean, std = vae.decode(z)
-    image = torch.normal(mean=mean, std=std).to(device)
+    image = torch.normal(mean=mean, std=torch.abs(std).sqrt()).to(device)
     image = image.view(channels, input_dim, input_dim)
     image = image.clip(0,1).detach().cpu().numpy()
     return image
@@ -195,6 +196,7 @@ channels = 3
 train_size = 20000
 test_size = 1000
 
+# epochs, batch_size, train_size = 2, 1, 100
 
 # torch.backends.cudnn.deterministic = True
 # torch.manual_seed(42)
@@ -247,7 +249,7 @@ encoder_VAE, decoder_VAE, reconstruction_errors, regularizers, latent_space = VA
 
 
 
-results_folder = 'results1/'
+results_folder = 'gaussian/'
 if not(os.path.exists(results_folder)):
     os.mkdir(results_folder)
 
