@@ -64,15 +64,15 @@ class BBBC(Dataset):
 
         moa = self.meta[self.col_names[-1]].iloc[idx]
         compound = self.meta[self.col_names[-3]].iloc[idx]
+        id = self.meta.index[idx]
 
-        sample = {"idx": idx, 
+        sample = {"id": id, 
                   "image": torch.tensor(image), 
                   "moa": moa, 
                   "compound": compound,
                   }
 
         return sample
-#3284
 
 if __name__ == "__main__":
     batch_size = 5
