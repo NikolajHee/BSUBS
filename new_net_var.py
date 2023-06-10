@@ -245,7 +245,7 @@ if __name__ == "__main__":
     train_size = 20000
     test_size = 1000
 
-    epochs, batch_size, train_size = 2, 1, 100
+    # epochs, batch_size, train_size = 2, 1, 100
 
     # torch.backends.cudnn.deterministic = True
     # torch.manual_seed(42)
