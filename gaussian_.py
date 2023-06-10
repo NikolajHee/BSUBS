@@ -95,7 +95,7 @@ class VAE(nn.Module):
     def decode(self, z):
         mu, log_var = torch.split(
             self.decoder.forward(z), self.channels * self.input_dim * self.input_dim, dim=1)
-        std = torch.exp(0.5 * log_var)
+        std = torch.exp(log_var)
         return mu, std
 
     def forward(self, x):
@@ -109,7 +109,7 @@ class VAE(nn.Module):
 
 
         log_like = (1 / (2 * (decode_var)) * nn.functional.mse_loss(decode_mu, x.flatten(
-            start_dim=1, end_dim=-1), reduction="none"))
+            start_dim=1, end_dim=-1), reduction="none")) + 0.5 * torch.log(decode_var) + torch.log(2 * torch.tensor(np.pi))
         #print(decode_var)
 
         reconstruction_error = torch.sum(log_like, dim=-1).mean()
@@ -179,8 +179,8 @@ def generate_image(X, vae, latent_dim, channels, input_dim, batch_size=1):
     mu, log_var = vae.encode(X)
     eps = torch.normal(mean=0, std=torch.ones(latent_dim)).to(device)
     z = mu + torch.exp(0.5 * log_var) * eps
-    mean, std = vae.decode(z)
-    image = torch.normal(mean=mean, std=torch.abs(std).sqrt()).to(device)
+    mean, var = vae.decode(z)
+    image = torch.normal(mean=mean, std=torch.sqrt(var)).to(device)
     image = image.view(channels, input_dim, input_dim)
     image = image.clip(0,1).detach().cpu().numpy()
     return image
