@@ -82,6 +82,7 @@ class decoder(nn.Module):
         self.final = nn.Sequential(
             nn.ConvTranspose2d(in_channels=hidden_channels[-1], out_channels=channels, kernel_size=(3,4), stride=(2,4), padding=(3,5), output_padding=(1,2)),
             nn.Flatten(start_dim=1),
+            nn.Sigmoid()
             #nn.Softmax(dim=1)
         )
 
@@ -254,7 +255,7 @@ if __name__ == "__main__":
     from dataloader import BBBC
 
     main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
-    #main_path = "/Users/nikolaj/Fagprojekt/Data/"
+    main_path = "/Users/nikolaj/Fagprojekt/Data/"
 
 
     exclude_dmso = False
