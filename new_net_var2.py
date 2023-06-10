@@ -267,14 +267,14 @@ if __name__ == "__main__":
                             subset=subset,
                             test=False,
                             exclude_dmso=exclude_dmso,
-                            shuffle=False)
+                            shuffle=shuffle)
 
     dataset_test = BBBC(folder_path=main_path + "singh_cp_pipeline_singlecell_images",
                             meta_path=main_path + "metadata.csv",
                             subset=subset,
                             test=True,
                             exclude_dmso=exclude_dmso,
-                            shuffle=False)
+                            shuffle=shuffle)
 
 
     X_train = DataLoader(dataset_train, batch_size=batch_size, shuffle=True)
@@ -300,7 +300,7 @@ if __name__ == "__main__":
 
 
 
-    results_folder = 'new_net_var/'
+    results_folder = 'new_net_var2/'
     if not(os.path.exists(results_folder)):
         os.mkdir(results_folder)
 
