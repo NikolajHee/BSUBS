@@ -301,7 +301,7 @@ if __name__ == "__main__":
 
 
 
-    results_folder = 'new_net_var/'
+    results_folder = 'new_net_var_sig/'
     if not(os.path.exists(results_folder)):
         os.mkdir(results_folder)
 
