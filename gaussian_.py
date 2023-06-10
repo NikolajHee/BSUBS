@@ -7,7 +7,15 @@ from torch.utils.data import DataLoader
 #from torchsummary import summary
 from tqdm import tqdm
 import os
+import sys
 
+index = int(sys.argv[1]) - 1
+
+betas = [0.1, 10]
+
+beta = betas[index] 
+
+print("beta = ", beta)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -73,13 +81,14 @@ class decoder(nn.Module):
 
 
 class VAE(nn.Module):
-    def __init__(self, latent_dim, input_dim, channels):
+    def __init__(self, latent_dim, input_dim, channels, beta = 1):
         super(VAE, self).__init__()
         self.encoder = encoder(input_dim, latent_dim, channels)
         self.decoder = decoder(input_dim, latent_dim, channels)
         self.latent_dim = latent_dim
         self.channels = channels
         self.input_dim = input_dim
+        self.beta = beta
 
         # self.prior = torch.distributions.MultivariateNormal(loc=torch.zeros(latent_dim), covariance_matrix=torch.eye(latent_dim))
 
@@ -107,15 +116,15 @@ class VAE(nn.Module):
         log_posterior = log_Normal(z, mu, log_var)
         log_prior = log_standard_Normal(z)
 
-
+        print(decode_var)
         log_like = (1 / (2 * (decode_var)) * nn.functional.mse_loss(decode_mu, x.flatten(
-            start_dim=1, end_dim=-1), reduction="none")) # 0.5 * torch.log(decode_var) + torch.log(2 * torch.tensor(np.pi))
+            start_dim=1, end_dim=-1), reduction="none")) + 0.5 * torch.log(decode_var) + 0.5 * torch.log(2 * torch.tensor(np.pi))
         #print(decode_var)
 
         reconstruction_error = torch.sum(log_like, dim=-1).mean()
         regularizer = - torch.sum(log_prior - log_posterior, dim=-1).mean() 
 
-        elbo = reconstruction_error + regularizer
+        elbo = reconstruction_error + regularizer * self.beta
 
         tqdm.write(
             f"ELBO: {elbo.item()}, Reconstruction error: {reconstruction_error.item()}, Regularizer: {regularizer.item()}")
@@ -234,6 +243,7 @@ VAE = VAE(
     latent_dim=latent_dim,
     input_dim=input_dim,
     channels=channels,
+    beta=beta,
 ).to(device)
 
 #print("VAE:")
@@ -249,7 +259,7 @@ encoder_VAE, decoder_VAE, reconstruction_errors, regularizers, latent_space = VA
 
 
 
-results_folder = 'gaussian/'
+results_folder = str(beta) + 'gaussian/'
 if not(os.path.exists(results_folder)):
     os.mkdir(results_folder)
 
