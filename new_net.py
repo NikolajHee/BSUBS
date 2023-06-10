@@ -270,16 +270,16 @@ def plot_1_reconstruction(image,
 
 if __name__ == "__main__":
     latent_dim = 200
-    epochs = 100
+    epochs = 150
     batch_size = 100
 
     input_dim = 68
     channels = 3
 
-    train_size = 20000
+    train_size = 30000
     test_size = 1000
 
-    epochs, batch_size, train_size = 2, 1, 10
+    # epochs, batch_size, train_size = 2, 1, 10
 
     # torch.backends.cudnn.deterministic = True
     # torch.manual_seed(42)
