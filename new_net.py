@@ -82,7 +82,7 @@ class decoder(nn.Module):
         self.final = nn.Sequential(
             nn.ConvTranspose2d(in_channels=hidden_channels[-1], out_channels=channels, kernel_size=3, stride=2, padding=3, output_padding=1),
             nn.Flatten(start_dim=1),
-            nn.LeakyReLU(leaky_relu_slope)
+            nn.Sigmoid(leaky_relu_slope)
         )
 
     def forward(self, x):
@@ -288,7 +288,7 @@ if __name__ == "__main__":
     from dataloader import BBBC
 
     main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
-    main_path = "/Users/nikolaj/Fagprojekt/Data/"
+    #main_path = "/Users/nikolaj/Fagprojekt/Data/"
 
 
     exclude_dmso = False
@@ -311,8 +311,8 @@ if __name__ == "__main__":
                             shuffle=shuffle)
 
 
-    X_train = DataLoader(dataset_train, batch_size=batch_size, shuffle=True)
-    X_test = DataLoader(dataset_test, batch_size=batch_size, shuffle=True)
+    X_train = DataLoader(dataset_train, batch_size=batch_size, shuffle=False)
+    X_test = DataLoader(dataset_test, batch_size=batch_size, shuffle=False)
 
     VAE = VAE(
         latent_dim=latent_dim,
