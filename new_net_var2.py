@@ -127,10 +127,10 @@ class VAE(nn.Module):
         # decode_std = 0.1 * torch.ones(decode_mu.shape).to(device)
         log_posterior = log_Normal(z, mu, log_var)
         log_prior = log_standard_Normal(z)
-
+        var = decode_var.mean()
 
         log_like = (1 / (2 * (decode_var)) * nn.functional.mse_loss(decode_mu, x.flatten(
-            start_dim=1, end_dim=-1), reduction="none")) + torch.log(torch.sqrt(decode_var)) + 0.5 * torch.log(2 * torch.tensor(np.pi))
+            start_dim=1, end_dim=-1), reduction="none")) + 0.5 * torch.log(decode_var) + 0.5 * torch.log(2 * torch.tensor(np.pi))
         #print(decode_var)
 
         reconstruction_error = torch.sum(log_like, dim=-1).mean()
@@ -139,7 +139,7 @@ class VAE(nn.Module):
         elbo = reconstruction_error + regularizer
 
         tqdm.write(
-            f"ELBO: {elbo.item()}, Reconstruction error: {reconstruction_error.item()}, Regularizer: {regularizer.item()}")
+            f"ELBO: {elbo.item()}, Reconstruction error: {reconstruction_error.item()}, Regularizer: {regularizer.item()}, Var: {var.item()}")
 
         return elbo, reconstruction_error, regularizer
 
@@ -258,7 +258,7 @@ if __name__ == "__main__":
 
 
     exclude_dmso = False
-    shuffle = False
+    shuffle = True
 
     subset = (train_size, test_size)
 
