@@ -126,7 +126,7 @@ class VAE(nn.Module):
 
         #decode_mu, decode_std = self.decode(z)
         decode_mu = self.decode(z)
-        decode_std = 0.1 * torch.ones(decode_mu.shape).to(device)
+        decode_std = 0.05 * torch.ones(decode_mu.shape).to(device)
         log_posterior = log_Normal(z, mu, log_var)
         log_prior = log_standard_Normal(z)
 
@@ -200,7 +200,7 @@ def generate_image(X, vae, latent_dim, channels, input_dim, batch_size=1):
     eps = torch.normal(mean=0, std=torch.ones(latent_dim)).to(device)
     z = mu + torch.exp(0.5 * log_var) * eps
     mean = vae.decode(z)
-    image = torch.normal(mean=mean, std=0.1).to(device)
+    image = torch.normal(mean=mean, std=0.05).to(device)
     image = image.view(channels, input_dim, input_dim)
     image = image.clip(0,1).detach().cpu().numpy()
     return image
@@ -247,7 +247,7 @@ if __name__ == "__main__":
     train_size = 30000
     test_size = 1000
 
-    epochs, batch_size, train_size = 2, 1, 100
+    # epochs, batch_size, train_size = 2, 1, 100
 
     # torch.backends.cudnn.deterministic = True
     # torch.manual_seed(42)
@@ -255,8 +255,8 @@ if __name__ == "__main__":
 
     from dataloader import BBBC
 
-    #main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
-    main_path = "/Users/nikolaj/Fagprojekt/Data/"
+    main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
+    #main_path = "/Users/nikolaj/Fagprojekt/Data/"
 
 
     exclude_dmso = False
