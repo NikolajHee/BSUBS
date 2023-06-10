@@ -82,7 +82,7 @@ class decoder(nn.Module):
         self.final = nn.Sequential(
             nn.ConvTranspose2d(in_channels=hidden_channels[-1], out_channels=channels, kernel_size=3, stride=2, padding=3, output_padding=1),
             nn.Flatten(start_dim=1),
-            #nn.Softmax(dim=1)
+            nn.LeakyReLU(leaky_relu_slope)
         )
 
     def forward(self, x):
@@ -126,16 +126,17 @@ class VAE(nn.Module):
 
         #decode_mu, decode_std = self.decode(z)
         decode_mu = self.decode(z)
-        decode_std = 0.05 * torch.ones(decode_mu.shape).to(device)
-        log_posterior = log_Normal(z, mu, log_var)
-        log_prior = log_standard_Normal(z)
+        #decode_std = 0.1 * torch.ones(decode_mu.shape).to(device)
+        #log_posterior = log_Normal(z, mu, log_var)
+        #log_prior = log_standard_Normal(z)
 
-
-        log_like = (1 / (2 * (decode_std)) * nn.functional.mse_loss(decode_mu, x.flatten(
-            start_dim=1, end_dim=-1), reduction="none"))
+        std = 0.05
+        log_like = 1/(2 * std**2) * nn.functional.mse_loss(decode_mu, x.flatten(
+            start_dim=1, end_dim=-1), reduction="none")
 
         reconstruction_error = torch.sum(log_like, dim=-1).mean()
-        regularizer = - torch.sum(log_prior - log_posterior, dim=-1).mean()
+        #regularizer = - torch.sum(log_prior - log_posterior, dim=-1).mean()
+        regularizer = -1/2 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp(), dim=1).mean()
 
         elbo = reconstruction_error + regularizer
 
@@ -203,7 +204,7 @@ def generate_image(X, vae, latent_dim, channels, input_dim, batch_size=1):
     image = torch.normal(mean=mean, std=0.05).to(device)
     image = image.view(channels, input_dim, input_dim)
     image = image.clip(0,1).detach().cpu().numpy()
-    return image
+    return (image, mean.clip(0,1).detach().cpu().numpy())
 
 
 def plot_reconstruction(data, 
@@ -236,18 +237,49 @@ def plot_reconstruction(data,
     plt.savefig(results_folder + name + '.png')
     plt.show()
 
+def plot_1_reconstruction(image, 
+                        vae,
+                        name, 
+                        latent_dim, 
+                        channels, 
+                        input_dim, 
+                        results_folder='',):
+    (recon_image,mean) = generate_image(
+        image,
+        vae=vae,
+        latent_dim=latent_dim,
+        channels=channels,
+        input_dim=input_dim,
+    )
+
+    fig, ax = plt.subplots(1, 3)
+    ax = ax.flatten()
+    ax[0].imshow(image.reshape((68,68,3)), cmap="gray")
+    ax[0].set_xticks([])
+    ax[0].set_yticks([])
+    ax[1].imshow(recon_image.reshape((68,68,3)), cmap="gray")
+    ax[1].set_xticks([])
+    ax[1].set_yticks([])
+    ax[2].imshow(mean.reshape((68,68,3)), cmap="gray")
+    ax[2].set_xticks([])
+    ax[2].set_yticks([])
+    fig.suptitle(name)
+    plt.savefig(results_folder + name +'.png')
+    plt.show()
+
+
 if __name__ == "__main__":
     latent_dim = 200
-    epochs = 200
-    batch_size = 200
+    epochs = 100
+    batch_size = 100
 
     input_dim = 68
     channels = 3
 
-    train_size = 30000
+    train_size = 20000
     test_size = 1000
 
-    # epochs, batch_size, train_size = 2, 1, 100
+    epochs, batch_size, train_size = 2, 1, 10
 
     # torch.backends.cudnn.deterministic = True
     # torch.manual_seed(42)
@@ -256,11 +288,11 @@ if __name__ == "__main__":
     from dataloader import BBBC
 
     main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
-    #main_path = "/Users/nikolaj/Fagprojekt/Data/"
+    main_path = "/Users/nikolaj/Fagprojekt/Data/"
 
 
     exclude_dmso = False
-    shuffle = False
+    shuffle = True
 
     subset = (train_size, test_size)
 
@@ -269,14 +301,14 @@ if __name__ == "__main__":
                             subset=subset,
                             test=False,
                             exclude_dmso=exclude_dmso,
-                            shuffle=False)
+                            shuffle=shuffle)
 
     dataset_test = BBBC(folder_path=main_path + "singh_cp_pipeline_singlecell_images",
                             meta_path=main_path + "metadata.csv",
                             subset=subset,
                             test=True,
                             exclude_dmso=exclude_dmso,
-                            shuffle=False)
+                            shuffle=shuffle)
 
 
     X_train = DataLoader(dataset_train, batch_size=batch_size, shuffle=True)
@@ -295,14 +327,14 @@ if __name__ == "__main__":
     encoder_VAE, decoder_VAE, REs, KLs, ELBOs = VAE.train_VAE(
         dataloader=X_train, epochs=epochs)
 
-    torch.save(encoder_VAE, "encoder_VAE.pt")
-    torch.save(decoder_VAE, "decoder_VAE.pt")
+    #torch.save(encoder_VAE, "encoder_VAE.pt")
+    #torch.save(decoder_VAE, "decoder_VAE.pt")
 
     # np.savez("latent_space_VAE.npz", latent_space=latent_space.detach().numpy())
 
 
 
-    results_folder = 'new_net/'
+    results_folder = 'test/'
     if not(os.path.exists(results_folder)):
         os.mkdir(results_folder)
 
@@ -319,23 +351,48 @@ if __name__ == "__main__":
     plt.savefig(results_folder + 'ELBO_components.png')
     plt.show()
         
+
+
+    for i, image in enumerate(X_train.dataset):
+        if i == 10:
+            break
+        plot_1_reconstruction(image['image'],
+                            vae = VAE,
+                            name="training" + '\n' + str(image['id']), 
+                            results_folder=results_folder, 
+                            latent_dim=latent_dim, 
+                            channels=channels, 
+                            input_dim=input_dim)
         
 
-    plot_reconstruction(X_train.dataset, 
-                        vae = VAE,
-                        name="Training_images_reconstructed", 
-                        results_folder=results_folder, 
-                        latent_dim=latent_dim, 
-                        channels=channels, 
-                        input_dim=input_dim)
+    for i, image in enumerate(X_test.dataset):
+        if i == 10:
+            break
+        plot_1_reconstruction(image['image'],
+                            vae = VAE,
+                            name="test" + '\n' + str(image['id']), 
+                            results_folder=results_folder, 
+                            latent_dim=latent_dim, 
+                            channels=channels, 
+                            input_dim=input_dim)
     
 
-    plot_reconstruction(X_test.dataset, 
-                        vae = VAE,
-                        name="Test_images_reconstructed", 
-                        results_folder=results_folder, 
-                        latent_dim=latent_dim, 
-                        channels=channels, 
-                        input_dim=input_dim)
+
+    # plot_reconstruction(X_train.dataset, 
+    #                     vae = VAE,
+    #                     name="Training_images_reconstructed", 
+    #                     results_folder=results_folder, 
+    #                     latent_dim=latent_dim, 
+    #                     channels=channels, 
+    #                     input_dim=input_dim)
+    
+
+    # plot_reconstruction(X_test.dataset, 
+    #                     vae = VAE,
+    #                     name="Test_images_reconstructed", 
+    #                     results_folder=results_folder, 
+    #                     latent_dim=latent_dim, 
+    #                     channels=channels, 
+    #                     input_dim=input_dim)
 
 
