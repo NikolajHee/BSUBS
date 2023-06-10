@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
-from torchsummary import summary
+#from torchsummary import summary
 from tqdm import tqdm
 import os
 
@@ -287,8 +287,8 @@ if __name__ == "__main__":
         hidden_channels=[8,16,32]
     ).to(device)
 
-    print("VAE:")
-    summary(VAE, input_size=(channels, input_dim, input_dim))
+    #print("VAE:")
+    #summary(VAE, input_size=(channels, input_dim, input_dim))
 
     encoder_VAE, decoder_VAE, REs, KLs, ELBOs = VAE.train_VAE(
         dataloader=X_train, epochs=epochs)
