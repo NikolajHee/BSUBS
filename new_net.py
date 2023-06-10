@@ -82,7 +82,7 @@ class decoder(nn.Module):
         self.final = nn.Sequential(
             nn.ConvTranspose2d(in_channels=hidden_channels[-1], out_channels=channels, kernel_size=3, stride=2, padding=3, output_padding=1),
             nn.Flatten(start_dim=1),
-            nn.Sigmoid(leaky_relu_slope)
+            nn.Sigmoid()
         )
 
     def forward(self, x):
