@@ -275,13 +275,13 @@ def plot_1_reconstruction(image,
 
 if __name__ == "__main__":
     latent_dim = 200
-    epochs = 10
+    epochs = 100
     batch_size = 100
 
     input_dim = 68
     channels = 3
 
-    train_size = 10000
+    train_size = 20000
     test_size = 1000
 
     #epochs, batch_size, train_size = 2, 1, 100

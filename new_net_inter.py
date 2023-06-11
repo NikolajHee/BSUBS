@@ -60,7 +60,7 @@ index_image_2 = 475106
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 latent_dim = 200
-epochs = 200
+epochs = 150
 batch_size = 200
 
 input_dim = 68
