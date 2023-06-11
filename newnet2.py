@@ -36,15 +36,15 @@ class encoder(nn.Module):
         save = []
         for h in self.hidden_channels:
             save.append(nn.Sequential(
-                nn.Conv2d(channels, out_channels=h, kernel_size=3, stride=2, padding=1),
-                nn.BatchNorm2d(h),
+                nn.Conv2d(channels, out_channels=h, kernel_size=5, stride=3, padding=1),
+                nn.BatchNorm2d(h, momentum=0.8),
                 nn.LeakyReLU(leaky_relu_slope)
             ))
             channels = h
         
         self.encoder = nn.Sequential(*save)
         # final layer
-        self.to_latent = nn.Sequential(nn.Linear(self.hidden_channels[-1]*9*9, latent_dim * 2),
+        self.to_latent = nn.Sequential(nn.Linear(self.hidden_channels[-1]*7*7, latent_dim * 2),
                                        nn.LeakyReLU(leaky_relu_slope))
 
     def forward(self, x):
@@ -64,15 +64,15 @@ class decoder(nn.Module):
 
 
         #* decoder layers
-        self.from_latent = nn.Linear(latent_dim, hidden_channels[0]*9*9)
+        self.from_latent = nn.Linear(latent_dim, hidden_channels[0]*7*7)
 
         # loop over hidden channels
         save = []
 
         for i in range(len(hidden_channels) -1):
             save.append(nn.Sequential(
-                nn.ConvTranspose2d(in_channels=hidden_channels[i], out_channels=hidden_channels[i+1], kernel_size=3, stride=2, padding=1, output_padding=1),
-                nn.BatchNorm2d(hidden_channels[i+1]),
+                nn.ConvTranspose2d(in_channels=hidden_channels[i], out_channels=hidden_channels[i+1], kernel_size=5, stride=4, padding=0),
+                nn.BatchNorm2d(hidden_channels[i+1], momentum=0.8),
                 nn.LeakyReLU(leaky_relu_slope)
             ))
         
@@ -80,15 +80,15 @@ class decoder(nn.Module):
 
         # final layer
         self.final = nn.Sequential(
-            nn.ConvTranspose2d(in_channels=hidden_channels[-1], out_channels=channels, kernel_size=(3,4), stride=(2,4), padding=(3,5), output_padding=(1,2)),
+            nn.ConvTranspose2d(in_channels=hidden_channels[-1], out_channels=channels, kernel_size=(4,4), stride=(3,5), padding=(10,5), output_padding=(0,2)),
             nn.Flatten(start_dim=1),
+            nn.LeakyReLU(leaky_relu_slope)
             #nn.Softmax(dim=1)
-            nn.Sigmoid()
         )
 
     def forward(self, x):
         x = self.from_latent(x)
-        x = x.view(-1, self.hidden_channels[0], 9, 9)
+        x = x.view(-1, self.hidden_channels[0], 7 ,7)
         x = self.decoder(x)
         x = self.final(x)
         return x
@@ -120,7 +120,7 @@ class VAE(nn.Module):
         std = torch.exp(log_var)
         return mu, std
 
-    def forward(self, x, save_latent = False):
+    def forward(self, x, beta = 0.1, save_latent = False):
         mu, log_var = self.encode(x)
         z = self.reparameterization(mu, log_var)
 
@@ -137,7 +137,7 @@ class VAE(nn.Module):
         reconstruction_error = torch.sum(log_like, dim=-1).mean()
         regularizer = - torch.sum(log_prior - log_posterior, dim=-1).mean() 
 
-        elbo = reconstruction_error + regularizer
+        elbo = reconstruction_error + regularizer * beta
 
         tqdm.write(
             f"ELBO: {elbo.item()}, Reconstruction error: {reconstruction_error.item()}, Regularizer: {regularizer.item()}")
@@ -326,7 +326,7 @@ if __name__ == "__main__":
         latent_dim=latent_dim,
         input_dim=input_dim,
         channels=channels,
-        hidden_channels=[8,16,32]
+        hidden_channels=[16,32]
     ).to(device)
     
 
@@ -345,7 +345,7 @@ if __name__ == "__main__":
 
     # np.savez("latent_space_VAE.npz", latent_space=latent_space.detach().numpy())
 
-    results_folder = 'newnet2/'
+    results_folder = 'new_net3/'
     if not(os.path.exists(results_folder)):
         os.mkdir(results_folder)
 

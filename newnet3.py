@@ -37,7 +37,7 @@ class encoder(nn.Module):
         for h in self.hidden_channels:
             save.append(nn.Sequential(
                 nn.Conv2d(channels, out_channels=h, kernel_size=3, stride=2, padding=1),
-                nn.BatchNorm2d(h),
+                nn.BatchNorm2d(h, momentum=0.9),
                 nn.LeakyReLU(leaky_relu_slope)
             ))
             channels = h
@@ -72,24 +72,16 @@ class decoder(nn.Module):
         for i in range(len(hidden_channels) -1):
             save.append(nn.Sequential(
                 nn.ConvTranspose2d(in_channels=hidden_channels[i], out_channels=hidden_channels[i+1], kernel_size=3, stride=2, padding=1, output_padding=1),
-                nn.BatchNorm2d(hidden_channels[i+1]),
+                nn.BatchNorm2d(hidden_channels[i+1], momentum=0.9),
                 nn.LeakyReLU(leaky_relu_slope)
             ))
         
         self.decoder = nn.Sequential(*save)
 
         # final layer
-         # final layer
-        self.final1 = nn.Sequential(
-            nn.ConvTranspose2d(in_channels=hidden_channels[-1], out_channels=channels, kernel_size=3, stride=2, padding=3, output_padding=1),
+        self.final = nn.Sequential(
+            nn.ConvTranspose2d(in_channels=hidden_channels[-1], out_channels=channels, kernel_size=(3,4), stride=(2,4), padding=(3,5), output_padding=(1,2)),
             nn.Flatten(start_dim=1),
-            nn.Sigmoid()
-            #nn.Softmax(dim=1)
-        )
-        self.final2 = nn.Sequential(
-            nn.ConvTranspose2d(in_channels=hidden_channels[-1], out_channels=channels, kernel_size=3, stride=2, padding=3, output_padding=1),
-            nn.Flatten(start_dim=1),
-            nn.Sigmoid()
             #nn.Softmax(dim=1)
         )
 
@@ -97,9 +89,8 @@ class decoder(nn.Module):
         x = self.from_latent(x)
         x = x.view(-1, self.hidden_channels[0], 9, 9)
         x = self.decoder(x)
-        x1 = self.final1(x)
-        x2 = self.final2(x)
-        return torch.hstack((x1, x2))
+        x = self.final(x)
+        return x
 
 
 class VAE(nn.Module):
@@ -128,7 +119,7 @@ class VAE(nn.Module):
         std = torch.exp(log_var)
         return mu, std
 
-    def forward(self, x, save_latent = False):
+    def forward(self, x, beta = 0.1, save_latent = False):
         mu, log_var = self.encode(x)
         z = self.reparameterization(mu, log_var)
 
@@ -145,7 +136,7 @@ class VAE(nn.Module):
         reconstruction_error = torch.sum(log_like, dim=-1).mean()
         regularizer = - torch.sum(log_prior - log_posterior, dim=-1).mean() 
 
-        elbo = reconstruction_error + regularizer
+        elbo = reconstruction_error + regularizer * beta
 
         tqdm.write(
             f"ELBO: {elbo.item()}, Reconstruction error: {reconstruction_error.item()}, Regularizer: {regularizer.item()}")
@@ -353,7 +344,7 @@ if __name__ == "__main__":
 
     # np.savez("latent_space_VAE.npz", latent_space=latent_space.detach().numpy())
 
-    results_folder = 'newnet3/'
+    results_folder = 'new_net3/'
     if not(os.path.exists(results_folder)):
         os.mkdir(results_folder)
 
