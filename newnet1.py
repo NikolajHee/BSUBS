@@ -26,7 +26,6 @@ def log_standard_Normal(x):
     return log_p
 
 
-
 class encoder(nn.Module):
     def __init__(self, input_dim, latent_dim, channels, hidden_channels, leaky_relu_slope=0.01):
         super(encoder, self).__init__()
@@ -45,10 +44,8 @@ class encoder(nn.Module):
         
         self.encoder = nn.Sequential(*save)
         # final layer
-        self.to_latent = nn.Sequential(
-                    nn.Linear(self.hidden_channels[-1]*5*5, latent_dim * 2),
-                    nn.LeakyReLU(leaky_relu_slope)
-            )
+        self.to_latent = nn.Sequential(nn.Linear(self.hidden_channels[-1]*9*9, latent_dim * 2),
+                                       nn.LeakyReLU(leaky_relu_slope))
 
     def forward(self, x):
         x = self.encoder(x)
@@ -60,13 +57,14 @@ class encoder(nn.Module):
 class decoder(nn.Module):
     def __init__(self, input_dim, latent_dim, channels, hidden_channels, leaky_relu_slope=0.01):
         super(decoder, self).__init__()
+
         self.channnels = channels
         self.input_dim = input_dim
         self.hidden_channels = hidden_channels
 
 
         #* decoder layers
-        self.from_latent = nn.Linear(latent_dim, hidden_channels[0]*5*5)
+        self.from_latent = nn.Linear(latent_dim, hidden_channels[0]*9*9)
 
         # loop over hidden channels
         save = []
@@ -81,20 +79,25 @@ class decoder(nn.Module):
         self.decoder = nn.Sequential(*save)
 
         # final layer
-        self.final = nn.Sequential(
-            nn.ConvTranspose2d(in_channels=hidden_channels[-1], out_channels=channels, kernel_size=3, stride=2, padding=7, output_padding=1),
+         # final layer
+        self.final1 = nn.Sequential(
+            nn.ConvTranspose2d(in_channels=hidden_channels[-1], out_channels=channels, kernel_size=3, stride=2, padding=3, output_padding=1),
             nn.Flatten(start_dim=1),
             #nn.Softmax(dim=1)
-            nn.Sigmoid()
+        )
+        self.final2 = nn.Sequential(
+            nn.ConvTranspose2d(in_channels=hidden_channels[-1], out_channels=channels, kernel_size=3, stride=2, padding=3, output_padding=1),
+            nn.Flatten(start_dim=1),
+            #nn.Softmax(dim=1)
         )
 
     def forward(self, x):
         x = self.from_latent(x)
-        x = x.view(-1, self.hidden_channels[0], 5, 5)
+        x = x.view(-1, self.hidden_channels[0], 9, 9)
         x = self.decoder(x)
-        mu = self.final(x)
-        log_var = self.final(x)
-        return mu, log_var
+        x1 = self.final1(x)
+        x2 = self.final2(x)
+        return torch.hstack((x1, x2))
 
 
 class VAE(nn.Module):
@@ -118,8 +121,6 @@ class VAE(nn.Module):
         return mu + torch.exp(0.5 * log_var) * self.eps
 
     def decode(self, z):
-        mu, log_var =  self.decoder.forward(z)
-        return mu, log_var.exp()
         mu, log_var = torch.split(
             self.decoder.forward(z), self.channels * self.input_dim * self.input_dim, dim=1)
         std = torch.exp(log_var)
@@ -136,7 +137,7 @@ class VAE(nn.Module):
 
 
         log_like = (1 / (2 * (decode_var)) * nn.functional.mse_loss(decode_mu, x.flatten(
-            start_dim=1, end_dim=-1), reduction="none")) + 0.5 * torch.log(decode_var) + 0.5 * torch.log(2 * torch.tensor(np.pi))
+            start_dim=1, end_dim=-1), reduction="none")) + torch.log(torch.sqrt(decode_var)) + 0.5 * torch.log(2 * torch.tensor(np.pi))
         #print(decode_var)
 
         reconstruction_error = torch.sum(log_like, dim=-1).mean()
@@ -205,7 +206,7 @@ def generate_image(X, vae, latent_dim, channels, input_dim, batch_size=1):
     eps = torch.normal(mean=0, std=torch.ones(latent_dim)).to(device)
     z = mu + torch.exp(0.5 * log_var) * eps
     mean, var = vae.decode(z)
-    image = torch.normal(mean=mean, std=var).to(device)
+    image = torch.normal(mean=mean, std=torch.sqrt(var)).to(device)
     image = image.view(channels, input_dim, input_dim)
     image = image.clip(0,1).detach().cpu().numpy()
     return (image, mean.clip(0,1).detach().cpu().numpy())
@@ -247,7 +248,8 @@ def plot_1_reconstruction(image,
                         latent_dim, 
                         channels, 
                         input_dim, 
-                        results_folder='',):
+                        results_folder='',
+                        plot_mean=True,):
     (recon_image,mean) = generate_image(
         image,
         vae=vae,
@@ -255,31 +257,35 @@ def plot_1_reconstruction(image,
         channels=channels,
         input_dim=input_dim,
     )
+    if plot_mean: 
+        fig, ax = plt.subplots(1, 3, figsize=(10,6))
+    else:
+        fig, ax = plt.subplots(1, 2, figsize=(10,6))
 
-    fig, ax = plt.subplots(1, 3)
     ax = ax.flatten()
     ax[0].imshow(image.reshape((68,68,3)), cmap="gray")
     ax[0].set_xticks([])
     ax[0].set_yticks([])
-    ax[0].set_title('Original') 
+    ax[0].set_title('Original', fontname="Times New Roman", size=22,fontweight="bold")
     ax[1].imshow(recon_image.reshape((68,68,3)), cmap="gray")
     ax[1].set_xticks([])
     ax[1].set_yticks([])
-    ax[1].set_title('Reconstruction')
-    ax[2].imshow(mean.reshape((68,68,3)), cmap="gray")
-    ax[2].set_xticks([])
-    ax[2].set_yticks([])
-    ax[2].set_title('Mean')
-    fig.suptitle(name)
+    ax[1].set_title('Reconstruction', fontname="Times New Roman", size=22,fontweight="bold")
+    if plot_mean:
+        ax[2].imshow(mean.reshape((68,68,3)), cmap="gray")
+        ax[2].set_xticks([])
+        ax[2].set_yticks([])
+        ax[2].set_title('Mean')
+    fig.suptitle(name, fontname='Times New Roman', size=26, fontweight='bold')
+    plt.tight_layout()
     plt.savefig(results_folder + name +'.png')
     plt.show()
     plt.close()
 
-
 if __name__ == "__main__":
     latent_dim = 200
-    epochs = 100
-    batch_size = 200
+    epochs = 120
+    batch_size = 100
 
     input_dim = 68
     channels = 3
@@ -287,7 +293,7 @@ if __name__ == "__main__":
     train_size = 20000
     test_size = 1000
 
-    #epochs, batch_size, train_size = 2, 2, 100
+    # epochs, batch_size, train_size = 2, 1, 10
 
     # torch.backends.cudnn.deterministic = True
     # torch.manual_seed(42)
@@ -326,8 +332,15 @@ if __name__ == "__main__":
         latent_dim=latent_dim,
         input_dim=input_dim,
         channels=channels,
-        hidden_channels=[16,32,64,128]
+        hidden_channels=[8,16,32]
     ).to(device)
+    
+
+    classes, indexes = np.unique(dataset_test.meta[dataset_test.col_names[-1]], return_index=True)
+    boolean = len(classes) == 13 if not exclude_dmso else len(classes) == 12
+
+    if not boolean: 
+        raise Warning("The number of unique drugs in the test set is not 13")
 
     #print("VAE:")
     #summary(VAE, input_size=(channels, input_dim, input_dim))
@@ -335,15 +348,24 @@ if __name__ == "__main__":
     encoder_VAE, decoder_VAE, REs, KLs, ELBOs = VAE.train_VAE(
         dataloader=X_train, epochs=epochs)
 
-    
 
     # np.savez("latent_space_VAE.npz", latent_space=latent_space.detach().numpy())
-
-
 
     results_folder = 'newnet1/'
     if not(os.path.exists(results_folder)):
         os.mkdir(results_folder)
+
+    train_images_folder = results_folder +'train_images/'
+
+    test_images_folder = results_folder + 'test_images/'
+
+    if not(os.path.exists(train_images_folder)):
+        os.mkdir(train_images_folder)
+    
+    if not(os.path.exists(test_images_folder)):
+        os.mkdir(test_images_folder)
+
+
 
     torch.save(encoder_VAE, results_folder + "encoder.pt")
     torch.save(decoder_VAE, results_folder + "decoder.pt")
@@ -354,35 +376,37 @@ if __name__ == "__main__":
     plt.plot(x, REs, label="Reconstruction Error")
     plt.plot(x, KLs, label="Regularizer")
     plt.plot(x, ELBOs, label="ELBO")
-    plt.xlabel("iterationns")
+    plt.xlabel("iterations")
     plt.title("ELBO Components")
     plt.legend()
     plt.savefig(results_folder + 'ELBO_components.png')
     plt.show()
+    # save memory
+    plt.close()
         
-        
+
 
     for i, image in enumerate(X_train.dataset):
         if i == 10:
             break
         plot_1_reconstruction(image['image'],
                             vae = VAE,
-                            name="training" + '\n' + str(image['id']), 
-                            results_folder=results_folder, 
+                            name="Train " + str(image['id']), 
+                            results_folder=train_images_folder, 
                             latent_dim=latent_dim, 
                             channels=channels, 
-                            input_dim=input_dim)
-        
-
-    for i, image in enumerate(X_test.dataset):
-        if i == 10:
-            break
-        plot_1_reconstruction(image['image'],
-                            vae = VAE,
-                            name="test" + '\n' + str(image['id']), 
-                            results_folder=results_folder, 
-                            latent_dim=latent_dim, 
-                            channels=channels, 
-                            input_dim=input_dim)
-
-
+                            input_dim=input_dim,
+                            plot_mean=False)
+    
+    if boolean:
+        for index in indexes:
+            image = dataset_test[index]
+            plot_1_reconstruction(image['image'],
+                                vae = VAE,
+                                name=image['moa'] + ' ' + str(image['id']), 
+                                results_folder=test_images_folder, 
+                                latent_dim=latent_dim, 
+                                channels=channels, 
+                                input_dim=input_dim,
+                                plot_mean=False)
+    

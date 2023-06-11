@@ -79,9 +79,17 @@ class decoder(nn.Module):
         self.decoder = nn.Sequential(*save)
 
         # final layer
-        self.final = nn.Sequential(
-            nn.ConvTranspose2d(in_channels=hidden_channels[-1], out_channels=channels, kernel_size=(3,4), stride=(2,4), padding=(3,5), output_padding=(1,2)),
+         # final layer
+        self.final1 = nn.Sequential(
+            nn.ConvTranspose2d(in_channels=hidden_channels[-1], out_channels=channels, kernel_size=3, stride=2, padding=3, output_padding=1),
             nn.Flatten(start_dim=1),
+            nn.Sigmoid()
+            #nn.Softmax(dim=1)
+        )
+        self.final2 = nn.Sequential(
+            nn.ConvTranspose2d(in_channels=hidden_channels[-1], out_channels=channels, kernel_size=3, stride=2, padding=3, output_padding=1),
+            nn.Flatten(start_dim=1),
+            nn.Sigmoid()
             #nn.Softmax(dim=1)
         )
 
@@ -89,8 +97,9 @@ class decoder(nn.Module):
         x = self.from_latent(x)
         x = x.view(-1, self.hidden_channels[0], 9, 9)
         x = self.decoder(x)
-        x = self.final(x)
-        return x
+        x1 = self.final1(x)
+        x2 = self.final2(x)
+        return torch.hstack((x1, x2))
 
 
 class VAE(nn.Module):
@@ -344,7 +353,7 @@ if __name__ == "__main__":
 
     # np.savez("latent_space_VAE.npz", latent_space=latent_space.detach().numpy())
 
-    results_folder = 'new_net3/'
+    results_folder = 'newnet3/'
     if not(os.path.exists(results_folder)):
         os.mkdir(results_folder)
 
