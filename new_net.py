@@ -273,7 +273,7 @@ def plot_1_reconstruction(image,
 
 if __name__ == "__main__":
     latent_dim = 200
-    epochs = 150
+    epochs = 105
     batch_size = 100
 
     input_dim = 68
@@ -330,17 +330,15 @@ if __name__ == "__main__":
     encoder_VAE, decoder_VAE, REs, KLs, ELBOs = VAE.train_VAE(
         dataloader=X_train, epochs=epochs)
 
-    #torch.save(encoder_VAE, "encoder_VAE.pt")
-    #torch.save(decoder_VAE, "decoder_VAE.pt")
 
     # np.savez("latent_space_VAE.npz", latent_space=latent_space.detach().numpy())
 
-
-
-    results_folder = 'test/'
+    results_folder = 'new_net/'
     if not(os.path.exists(results_folder)):
         os.mkdir(results_folder)
 
+    torch.save(encoder_VAE, results_folder + "encoder.pt")
+    torch.save(decoder_VAE, results_folder + "decoder.pt")
 
 
     x = np.arange(0, len(REs), 1)
@@ -353,6 +351,8 @@ if __name__ == "__main__":
     plt.legend()
     plt.savefig(results_folder + 'ELBO_components.png')
     plt.show()
+    # save memory
+    plt.close()
         
 
 
