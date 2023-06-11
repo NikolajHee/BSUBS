@@ -138,8 +138,8 @@ plt.show()
 
 get_image = get_image_based_on_id(main_path + "singh_cp_pipeline_singlecell_images", main_path + "metadata.csv")
 
-_, _, _, z1 = VAE(get_image[index_image_1]["image"].copy().detach().float().view(1,3,68,68).to(device), save_latent=True)
-_, _, _, z2 = VAE(get_image[index_image_2]["image"].copy().detach().float().view(1,3,68,68).to(device), save_latent=True)
+_, _, _, z1 = VAE(get_image[index_image_1]["image"].clone().detach().float().view(1,3,68,68).to(device), save_latent=True)
+_, _, _, z2 = VAE(get_image[index_image_2]["image"].clone().detach().float().view(1,3,68,68).to(device), save_latent=True)
 
 
 generated_images = []
