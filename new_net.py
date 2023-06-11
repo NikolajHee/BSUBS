@@ -244,7 +244,8 @@ def plot_1_reconstruction(image,
                         latent_dim, 
                         channels, 
                         input_dim, 
-                        results_folder='',):
+                        results_folder='',
+                        plot_mean=True,):
     (recon_image,mean) = generate_image(
         image,
         vae=vae,
@@ -252,25 +253,51 @@ def plot_1_reconstruction(image,
         channels=channels,
         input_dim=input_dim,
     )
+    if plot_mean: 
+        fig, ax = plt.subplots(1, 3, figsize=(10,6))
+    else:
+        fig, ax = plt.subplots(1, 2, figsize=(10,6))
 
-    fig, ax = plt.subplots(1, 3)
     ax = ax.flatten()
     ax[0].imshow(image.reshape((68,68,3)), cmap="gray")
     ax[0].set_xticks([])
     ax[0].set_yticks([])
-    ax[0].set_title('Original') 
+    ax[0].set_title('Original', fontname="Times New Roman", size=22,fontweight="bold")
     ax[1].imshow(recon_image.reshape((68,68,3)), cmap="gray")
     ax[1].set_xticks([])
     ax[1].set_yticks([])
-    ax[1].set_title('Reconstruction')
-    ax[2].imshow(mean.reshape((68,68,3)), cmap="gray")
-    ax[2].set_xticks([])
-    ax[2].set_yticks([])
-    ax[2].set_title('Mean')
-    fig.suptitle(name)
+    ax[1].set_title('Reconstruction', fontname="Times New Roman", size=22,fontweight="bold")
+    if plot_mean:
+        ax[2].imshow(mean.reshape((68,68,3)), cmap="gray")
+        ax[2].set_xticks([])
+        ax[2].set_yticks([])
+        ax[2].set_title('Mean')
+    fig.suptitle(name, fontname='Times New Roman', size=26, fontweight='bold')
+    plt.tight_layout()
     plt.savefig(results_folder + name +'.png')
     plt.show()
     plt.close()
+
+def plot_ELBO(REs, KLs, ELBOs, name, results_folder):
+    fig = plt.figure(figsize=(10,6))
+    plt.plot(REs, label='Reconstruction Error', color='red', 
+             linestyle='--', linewidth=2, alpha=0.5)
+    
+    plt.plot(KLs, label='Regularizer', color='blue', 
+             linestyle='--', linewidth=2, alpha=0.5)
+    
+    plt.plot(ELBOs, label='ELBO', color='black', 
+             linestyle='-', linewidth=4, alpha=1)
+    plt.legend(fontsize=15)
+    plt.title(name, fontname='Times New Roman', size=26, fontweight='bold')
+    plt.xlabel('Epoch', fontname='Times New Roman', size=22, fontweight='bold')
+    plt.ylabel('Loss', fontname='Times New Roman', size=22, fontweight='bold')
+    plt.tick_params(axis='both', which='major', labelsize=18)
+    plt.tight_layout()
+    plt.savefig(results_folder + name + '.png')
+    plt.show()
+    plt.close()
+
 
 
 if __name__ == "__main__":
@@ -284,7 +311,7 @@ if __name__ == "__main__":
     train_size = 30000
     test_size = 1000
 
-    # epochs, batch_size, train_size = 2, 1, 10
+    epochs, batch_size, train_size = 2, 1, 10
 
     # torch.backends.cudnn.deterministic = True
     # torch.manual_seed(42)
@@ -293,7 +320,7 @@ if __name__ == "__main__":
     from dataloader import BBBC
 
     main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
-    #main_path = "/Users/nikolaj/Fagprojekt/Data/"
+    main_path = "/Users/nikolaj/Fagprojekt/Data/"
 
 
     exclude_dmso = False
@@ -325,6 +352,13 @@ if __name__ == "__main__":
         channels=channels,
         hidden_channels=[8,16,32]
     ).to(device)
+    
+
+    classes, indexes = np.unique(dataset_test.meta[dataset_test.col_names[-1]], return_index=True)
+    boolean = len(classes) == 13 if not exclude_dmso else len(classes) == 12
+
+    if not boolean: 
+        raise Warning("The number of unique drugs in the test set is not 13")
 
     #print("VAE:")
     #summary(VAE, input_size=(channels, input_dim, input_dim))
@@ -333,53 +367,59 @@ if __name__ == "__main__":
         dataloader=X_train, epochs=epochs)
 
 
+    from interpolation import interpolate_between_two_images, interpolate_between_three_images
+
     # np.savez("latent_space_VAE.npz", latent_space=latent_space.detach().numpy())
 
     results_folder = 'new_net/'
     if not(os.path.exists(results_folder)):
         os.mkdir(results_folder)
 
+    interpolate_between_two_images(VAE, 452305, 475106, main_path, results_folder=results_folder)
+    interpolate_between_three_images(VAE, 452305, 475106, 273028, main_path, results_folder=results_folder)
+
+    train_images_folder = results_folder +'train_images/'
+
+    test_images_folder = results_folder + 'test_images/'
+
+    if not(os.path.exists(train_images_folder)):
+        os.mkdir(train_images_folder)
+    
+    if not(os.path.exists(test_images_folder)):
+        os.mkdir(test_images_folder)
+
+
+
     torch.save(encoder_VAE, results_folder + "encoder.pt")
     torch.save(decoder_VAE, results_folder + "decoder.pt")
 
 
-    x = np.arange(0, len(REs), 1)
-
-    plt.plot(x, REs, label="Reconstruction Error")
-    plt.plot(x, KLs, label="Regularizer")
-    plt.plot(x, ELBOs, label="ELBO")
-    plt.xlabel("iterationns")
-    plt.title("ELBO Components")
-    plt.legend()
-    plt.savefig(results_folder + 'ELBO_components.png')
-    plt.show()
-    # save memory
-    plt.close()
+    plot_ELBO(REs, KLs, ELBOs, name="ELBO-components", results_folder=results_folder)
         
-
 
     for i, image in enumerate(X_train.dataset):
         if i == 10:
             break
         plot_1_reconstruction(image['image'],
                             vae = VAE,
-                            name="training" + '\n' + str(image['id']), 
-                            results_folder=results_folder, 
+                            name="Train " + str(image['id']), 
+                            results_folder=train_images_folder, 
                             latent_dim=latent_dim, 
                             channels=channels, 
-                            input_dim=input_dim)
-        
-
-    for i, image in enumerate(X_test.dataset):
-        if i == 10:
-            break
-        plot_1_reconstruction(image['image'],
-                            vae = VAE,
-                            name="test" + '\n' + str(image['id']), 
-                            results_folder=results_folder, 
-                            latent_dim=latent_dim, 
-                            channels=channels, 
-                            input_dim=input_dim)
+                            input_dim=input_dim,
+                            plot_mean=False)
+    
+    if boolean:
+        for index in indexes:
+            image = dataset_test[index]
+            plot_1_reconstruction(image['image'],
+                                vae = VAE,
+                                name=image['moa'] + ' ' + str(image['id']), 
+                                results_folder=test_images_folder, 
+                                latent_dim=latent_dim, 
+                                channels=channels, 
+                                input_dim=input_dim,
+                                plot_mean=False)
     
 
 

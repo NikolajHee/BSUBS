@@ -74,6 +74,49 @@ class BBBC(Dataset):
 
         return sample
 
+
+class get_image_based_on_id(BBBC):
+    # class to get a picture based on the id solely
+    # (used when doing interpolation, as we want specific images)
+    def __init__(self, folder_path, meta_path, normalize='to_1'):
+        subset = (1,1)
+        exclude_dmso=False
+        shuffle=False
+        test=False
+
+
+        super().__init__(folder_path, meta_path, subset, test, normalize, exclude_dmso, shuffle)
+        try:
+            self.meta = pd.read_csv(meta_path, index_col=0)
+        except:
+            raise ValueError("Please change variable 'main_path' to the path of the data folder (should contain metadata.csv, ...)")
+    
+    def __getitem__(self, idx): 
+        img_name = os.path.join(self.folder_path,
+                                self.meta[self.col_names[1]].iloc[idx], 
+                                self.meta[self.col_names[3]].iloc[idx])
+    
+        image = np.load(img_name)
+
+        # convert the data to appropriate format
+        if self.normalize == 'to_1':
+            image = self.normalize_to_1(image)
+        else:
+            image = self.normalize_to_255(image)
+
+        moa = self.meta[self.col_names[-1]].iloc[idx]
+        compound = self.meta[self.col_names[-3]].iloc[idx]
+        id = self.meta.index[idx]
+
+        sample = {"id": id, 
+                  "image": torch.tensor(image), 
+                  "moa": moa, 
+                  "compound": compound,
+                  }
+
+        return sample
+    
+
 if __name__ == "__main__":
     batch_size = 5
 
@@ -116,7 +159,7 @@ if __name__ == "__main__":
     for i, batch in enumerate(X_train):
         for j, sample in enumerate(batch["image"]):
             plt.imshow(sample.reshape(68,68,3), cmap="gray")
-            plt.title("batch: {}, image: {}".format(i,batch['idx'][j]))
+            plt.title("batch: {}, image: {}".format(i,batch['id'][j]))
             plt.axis("off")
             plt.show()
             print('abe')
@@ -130,9 +173,9 @@ if __name__ == "__main__":
         if i == num_batches:
             break
         for j, sample in enumerate(batch["image"]):
-            print("batch: {}, image: {}, moa: {}, compound: {}".format(i,batch['idx'][j], batch['moa'][j], batch['compound'][j]))
+            print("batch: {}, image: {}, moa: {}, compound: {}".format(i,batch['id'][j], batch['moa'][j], batch['compound'][j]))
             axs[i,j].imshow(sample.reshape(68,68,3), cmap="gray")
-            axs[i,j].set_title("batch: {}, image: {}".format(i,batch['idx'][j]))
+            axs[i,j].set_title("batch: {}, image: {}".format(i,batch['id'][j]))
             axs[i,j].axis("off")
     plt.tight_layout()
     plt.show()
