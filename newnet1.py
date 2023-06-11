@@ -344,7 +344,7 @@ if __name__ == "__main__":
 
     # np.savez("latent_space_VAE.npz", latent_space=latent_space.detach().numpy())
 
-    results_folder = 'new_net3/'
+    results_folder = 'new_net1/'
     if not(os.path.exists(results_folder)):
         os.mkdir(results_folder)
 
