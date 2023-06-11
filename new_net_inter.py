@@ -138,8 +138,8 @@ plt.show()
 
 get_image = get_image_based_on_id(main_path + "singh_cp_pipeline_singlecell_images", main_path + "metadata.csv")
 
-_, _, _, z1 = VAE(torch.tensor(get_image[index_image_1]["image"]).unsqueeze(0).to(device), save_latent=True)
-_, _, _, z2 = VAE(torch.tensor(get_image[index_image_2]["image"]).unsqueeze(0).to(device), save_latent=True)
+_, _, _, z1 = VAE(torch.tensor(get_image[index_image_1]["image"]).float().view(1,3,68,68).to(device), save_latent=True)
+_, _, _, z2 = VAE(torch.tensor(get_image[index_image_2]["image"]).float().view(1,3,68,68).to(device), save_latent=True)
 
 
 generated_images = []
@@ -155,7 +155,7 @@ fig, ax = plt.subplots(1, 11, figsize=(20, 2))
 ax[0].imshow(get_image[index_image_1]["image"].numpy().reshape((68,68,3)))
 ax[0].axis('off')
 for i in range(9):
-    ax[i+1].imshow(generated_images[i].transpose(1,2,0))
+    ax[i+1].imshow(generated_images[i].numpy().reshape((68,68,3)))
     ax[i+1].axis('off')
 ax[10].imshow(get_image[index_image_2]["image"].numpy().reshape((68,68,3)))
 ax[10].axis('off')
