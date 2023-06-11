@@ -270,6 +270,7 @@ def plot_1_reconstruction(image,
     fig.suptitle(name)
     plt.savefig(results_folder + name +'.png')
     plt.show()
+    plt.close()
 
 
 if __name__ == "__main__":
