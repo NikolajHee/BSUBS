@@ -45,8 +45,10 @@ class encoder(nn.Module):
         
         self.encoder = nn.Sequential(*save)
         # final layer
-        self.to_latent = nn.Sequential(nn.Linear(self.hidden_channels[-1]*5*5, latent_dim * 2),
-                                       nn.LeakyReLU(leaky_relu_slope))
+        self.to_latent = nn.Sequential(
+                    nn.Linear(self.hidden_channels[-1]*5*5, latent_dim * 2),
+                    nn.LeakyReLU(leaky_relu_slope)
+            )
 
     def forward(self, x):
         x = self.encoder(x)
@@ -58,7 +60,6 @@ class encoder(nn.Module):
 class decoder(nn.Module):
     def __init__(self, input_dim, latent_dim, channels, hidden_channels, leaky_relu_slope=0.01):
         super(decoder, self).__init__()
-
         self.channnels = channels
         self.input_dim = input_dim
         self.hidden_channels = hidden_channels
@@ -204,7 +205,7 @@ def generate_image(X, vae, latent_dim, channels, input_dim, batch_size=1):
     eps = torch.normal(mean=0, std=torch.ones(latent_dim)).to(device)
     z = mu + torch.exp(0.5 * log_var) * eps
     mean, var = vae.decode(z)
-    image = torch.normal(mean=mean, std=var.exp()).to(device)
+    image = torch.normal(mean=mean, std=var).to(device)
     image = image.view(channels, input_dim, input_dim)
     image = image.clip(0,1).detach().cpu().numpy()
     return (image, mean.clip(0,1).detach().cpu().numpy())
@@ -325,7 +326,7 @@ if __name__ == "__main__":
         latent_dim=latent_dim,
         input_dim=input_dim,
         channels=channels,
-        hidden_channels=[16,32,64,64]
+        hidden_channels=[16,32,64,128]
     ).to(device)
 
     #print("VAE:")

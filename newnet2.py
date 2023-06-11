@@ -117,8 +117,8 @@ class VAE(nn.Module):
     def decode(self, z):
         mu, log_var = torch.split(
             self.decoder.forward(z), self.channels * self.input_dim * self.input_dim, dim=1)
-        std = torch.exp(log_var)
-        return mu, std
+        var = torch.exp(log_var)
+        return mu, var
 
     def forward(self, x, save_latent = False):
         mu, log_var = self.encode(x)
@@ -202,7 +202,7 @@ def generate_image(X, vae, latent_dim, channels, input_dim, batch_size=1):
     eps = torch.normal(mean=0, std=torch.ones(latent_dim)).to(device)
     z = mu + torch.exp(0.5 * log_var) * eps
     mean, var = vae.decode(z)
-    image = torch.normal(mean=mean, std=var.exp()).to(device)
+    image = torch.normal(mean=mean, std=var).to(device)
     image = image.view(channels, input_dim, input_dim)
     image = image.clip(0,1).detach().cpu().numpy()
     return (image, mean.clip(0,1).detach().cpu().numpy())
@@ -323,7 +323,7 @@ if __name__ == "__main__":
         latent_dim=latent_dim,
         input_dim=input_dim,
         channels=channels,
-        hidden_channels=[16,32,64,64]
+        hidden_channels=[16,32,64,128]
     ).to(device)
 
     #print("VAE:")
