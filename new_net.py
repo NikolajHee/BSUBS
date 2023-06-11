@@ -109,9 +109,9 @@ class VAE(nn.Module):
             self.encoder.forward(x), self.latent_dim, dim=1)
         return mu, log_var
 
-    @ staticmethod
+    #@ staticmethod
     def reparameterization(self, mu, log_var):
-        self.eps = torch.normal(mean=0, std=torch.ones(len(mu))).to(device)
+        self.eps = torch.normal(mean=0, std=torch.ones(self.latent_dim)).to(device)
         return mu + torch.exp(0.5 * log_var) * self.eps
 
     def decode(self, z):
