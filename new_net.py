@@ -26,9 +26,9 @@ def log_standard_Normal(x):
     return log_p
 
 
-class encoder(nn.Module):
+class Encoder(nn.Module):
     def __init__(self, input_dim, latent_dim, channels, hidden_channels, leaky_relu_slope=0.01):
-        super(encoder, self).__init__()
+        super(Encoder, self).__init__()
         #* encoder layers
         self.hidden_channels = hidden_channels
 
@@ -54,9 +54,9 @@ class encoder(nn.Module):
         return x
 
 
-class decoder(nn.Module):
+class Decoder(nn.Module):
     def __init__(self, input_dim, latent_dim, channels, hidden_channels, leaky_relu_slope=0.01):
-        super(decoder, self).__init__()
+        super(Decoder, self).__init__()
 
         self.channnels = channels
         self.input_dim = input_dim
@@ -96,8 +96,8 @@ class decoder(nn.Module):
 class VAE(nn.Module):
     def __init__(self, latent_dim, input_dim, channels, hidden_channels: list=[8, 16, 32]):
         super(VAE, self).__init__()
-        self.encoder = encoder(input_dim, latent_dim, channels, hidden_channels)
-        self.decoder = decoder(input_dim, latent_dim, channels, [i for i in reversed(hidden_channels)])
+        self.encoder = Encoder(input_dim, latent_dim, channels, hidden_channels)
+        self.decoder = Decoder(input_dim, latent_dim, channels, [i for i in reversed(hidden_channels)])
         self.latent_dim = latent_dim
         self.channels = channels
         self.input_dim = input_dim
@@ -109,8 +109,9 @@ class VAE(nn.Module):
             self.encoder.forward(x), self.latent_dim, dim=1)
         return mu, log_var
 
+    @ staticmethod
     def reparameterization(self, mu, log_var):
-        self.eps = torch.normal(mean=0, std=torch.ones(self.latent_dim)).to(device)
+        self.eps = torch.normal(mean=0, std=torch.ones(len(mu))).to(device)
         return mu + torch.exp(0.5 * log_var) * self.eps
 
     def decode(self, z):

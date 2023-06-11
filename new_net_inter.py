@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 #from torchsummary import summary
 from tqdm import tqdm
 import os
-from new_net import log_Normal, log_standard_Normal, encoder, decoder, VAE, generate_image, plot_reconstruction, plot_1_reconstruction
+from new_net import log_Normal, log_standard_Normal, Encoder, Decoder, VAE, generate_image, plot_reconstruction, plot_1_reconstruction
 from dataloader import BBBC
 
 def interpolate(v1, v2, Nstep):
@@ -69,7 +69,7 @@ channels = 3
 train_size = 20000
 test_size = 1000
 
-#epochs, batch_size, train_size = 2, 1, 10
+epochs, batch_size, train_size = 2, 1, 10
 
 # torch.backends.cudnn.deterministic = True
 # torch.manual_seed(42)
@@ -152,12 +152,12 @@ for z in interpolate(z1, z2, 9):
     generated_images.append(image)
 
 fig, ax = plt.subplots(1, 11, figsize=(20, 2))
-ax[0].imshow(get_image[index_image_1]["image"].numpy().reshape((68,68,3)))
+ax[0].imshow(get_image[index_image_1]["image"].reshape((68,68,3)))
 ax[0].axis('off')
 for i in range(9):
-    ax[i+1].imshow(generated_images[i].numpy().reshape((68,68,3)))
+    ax[i+1].imshow(generated_images[i].reshape((68,68,3)))
     ax[i+1].axis('off')
-ax[10].imshow(get_image[index_image_2]["image"].numpy().reshape((68,68,3)))
+ax[10].imshow(get_image[index_image_2]["image"].reshape((68,68,3)))
 ax[10].axis('off')
 plt.tight_layout()
 plt.title("Interpolation between two images")
