@@ -80,9 +80,9 @@ class decoder(nn.Module):
 
         # final layer
         self.final = nn.Sequential(
-            nn.ConvTranspose2d(in_channels=hidden_channels[-1], out_channels=channels, kernel_size=(3,4), stride=(2,4), padding=(3,5), output_padding=(1,2)),
+            nn.ConvTranspose2d(in_channels=hidden_channels[-1], out_channels=channels, kernel_size=3, stride=2, padding=3, output_padding=1),
             nn.Flatten(start_dim=1),
-            #nn.Softmax(dim=1)
+            nn.Sigmoid()
         )
 
     def forward(self, x):
@@ -114,34 +114,36 @@ class VAE(nn.Module):
         return mu + torch.exp(0.5 * log_var) * self.eps
 
     def decode(self, z):
+        return self.decoder.forward(z)
         mu, log_var = torch.split(
             self.decoder.forward(z), self.channels * self.input_dim * self.input_dim, dim=1)
-        std = torch.exp(log_var)
+        std = torch.exp(0.5 * log_var)
         return mu, std
 
     def forward(self, x, save_latent = False):
         mu, log_var = self.encode(x)
         z = self.reparameterization(mu, log_var)
 
-        decode_mu, decode_var = self.decode(z)
-        # decode_std = 0.1 * torch.ones(decode_mu.shape).to(device)
+        #decode_mu, decode_std = self.decode(z)
+        decode_mu = self.decode(z)
+        #decode_std = 0.1 * torch.ones(decode_mu.shape).to(device)
         log_posterior = log_Normal(z, mu, log_var)
         log_prior = log_standard_Normal(z)
-        var = decode_var.mean()
 
-        log_like = (1 / (2 * (decode_var)) * nn.functional.mse_loss(decode_mu, x.flatten(
-            start_dim=1, end_dim=-1), reduction="none")) + 0.5 * torch.log(decode_var) + 0.5 * torch.log(2 * torch.tensor(np.pi))
-        #print(decode_var)
+        std = 0.05
+        log_like = 1/(2 * std**2) * nn.functional.mse_loss(decode_mu, x.flatten(
+            start_dim=1, end_dim=-1), reduction="none")
 
         reconstruction_error = torch.sum(log_like, dim=-1).mean()
-        regularizer = - torch.sum(log_prior - log_posterior, dim=-1).mean() 
+        regularizer = - torch.sum(log_prior - log_posterior, dim=-1).mean()
+        #regularizer = -1/2 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp(), dim=1).mean()
 
         elbo = reconstruction_error + regularizer
 
         tqdm.write(
-            f"ELBO: {elbo.item()}, Reconstruction error: {reconstruction_error.item()}, Regularizer: {regularizer.item()}, Var: {var.item()}")
+            f"ELBO: {elbo.item()}, Reconstruction error: {reconstruction_error.item()}, Regularizer: {regularizer.item()}")
 
-        return elbo, reconstruction_error, regularizer
+        return (elbo, reconstruction_error, regularizer) if not save_latent else (elbo, reconstruction_error, regularizer, z)
 
     def initialise(self):
         def _init_weights(m):
@@ -198,11 +200,12 @@ def generate_image(X, vae, latent_dim, channels, input_dim, batch_size=1):
     mu, log_var = vae.encode(X.view(batch_size, channels, input_dim, input_dim))
     eps = torch.normal(mean=0, std=torch.ones(latent_dim)).to(device)
     z = mu + torch.exp(0.5 * log_var) * eps
-    mean, var = vae.decode(z)
-    image = torch.normal(mean=mean, std=torch.sqrt(var)).to(device)
+    mean = vae.decode(z)
+    image = torch.normal(mean=mean, std=0.05).to(device)
     image = image.view(channels, input_dim, input_dim)
     image = image.clip(0,1).detach().cpu().numpy()
-    return image
+    return (image, mean.clip(0,1).detach().cpu().numpy())
+
 
 def plot_reconstruction(data, 
                         vae,
@@ -234,18 +237,52 @@ def plot_reconstruction(data,
     plt.savefig(results_folder + name + '.png')
     plt.show()
 
+def plot_1_reconstruction(image, 
+                        vae,
+                        name, 
+                        latent_dim, 
+                        channels, 
+                        input_dim, 
+                        results_folder='',):
+    (recon_image,mean) = generate_image(
+        image,
+        vae=vae,
+        latent_dim=latent_dim,
+        channels=channels,
+        input_dim=input_dim,
+    )
+
+    fig, ax = plt.subplots(1, 3)
+    ax = ax.flatten()
+    ax[0].imshow(image.reshape((68,68,3)), cmap="gray")
+    ax[0].set_xticks([])
+    ax[0].set_yticks([])
+    ax[0].set_title('Original') 
+    ax[1].imshow(recon_image.reshape((68,68,3)), cmap="gray")
+    ax[1].set_xticks([])
+    ax[1].set_yticks([])
+    ax[1].set_title('Reconstruction')
+    ax[2].imshow(mean.reshape((68,68,3)), cmap="gray")
+    ax[2].set_xticks([])
+    ax[2].set_yticks([])
+    ax[2].set_title('Mean')
+    fig.suptitle(name)
+    plt.savefig(results_folder + name +'.png')
+    plt.show()
+
+
 if __name__ == "__main__":
     latent_dim = 200
-    epochs = 200
-    batch_size = 200
+    epochs = 150
+    batch_size = 100
 
     input_dim = 68
     channels = 3
 
-    train_size = 20000
+    train_size = 30000
     test_size = 1000
 
-    # epochs, batch_size, train_size = 2, 1, 100
+    # epochs, batch_size, train_size = 2, 1, 10
 
     # torch.backends.cudnn.deterministic = True
     # torch.manual_seed(42)
@@ -277,8 +314,8 @@ if __name__ == "__main__":
                             shuffle=shuffle)
 
 
-    X_train = DataLoader(dataset_train, batch_size=batch_size, shuffle=True)
-    X_test = DataLoader(dataset_test, batch_size=batch_size, shuffle=True)
+    X_train = DataLoader(dataset_train, batch_size=batch_size, shuffle=False)
+    X_test = DataLoader(dataset_test, batch_size=batch_size, shuffle=False)
 
     VAE = VAE(
         latent_dim=latent_dim,
@@ -293,14 +330,14 @@ if __name__ == "__main__":
     encoder_VAE, decoder_VAE, REs, KLs, ELBOs = VAE.train_VAE(
         dataloader=X_train, epochs=epochs)
 
-    torch.save(encoder_VAE, "encoder_VAE.pt")
-    torch.save(decoder_VAE, "decoder_VAE.pt")
+    #torch.save(encoder_VAE, "encoder_VAE.pt")
+    #torch.save(decoder_VAE, "decoder_VAE.pt")
 
     # np.savez("latent_space_VAE.npz", latent_space=latent_space.detach().numpy())
 
 
 
-    results_folder = 'new_net_var2/'
+    results_folder = 'constant_var/'
     if not(os.path.exists(results_folder)):
         os.mkdir(results_folder)
 
@@ -317,23 +354,48 @@ if __name__ == "__main__":
     plt.savefig(results_folder + 'ELBO_components.png')
     plt.show()
         
+
+
+    for i, image in enumerate(X_train.dataset):
+        if i == 10:
+            break
+        plot_1_reconstruction(image['image'],
+                            vae = VAE,
+                            name="training" + '\n' + str(image['id']), 
+                            results_folder=results_folder, 
+                            latent_dim=latent_dim, 
+                            channels=channels, 
+                            input_dim=input_dim)
         
 
-    plot_reconstruction(X_train.dataset, 
-                        vae = VAE,
-                        name="Training_images_reconstructed", 
-                        results_folder=results_folder, 
-                        latent_dim=latent_dim, 
-                        channels=channels, 
-                        input_dim=input_dim)
+    for i, image in enumerate(X_test.dataset):
+        if i == 10:
+            break
+        plot_1_reconstruction(image['image'],
+                            vae = VAE,
+                            name="test" + '\n' + str(image['id']), 
+                            results_folder=results_folder, 
+                            latent_dim=latent_dim, 
+                            channels=channels, 
+                            input_dim=input_dim)
     
 
-    plot_reconstruction(X_test.dataset, 
-                        vae = VAE,
-                        name="Test_images_reconstructed", 
-                        results_folder=results_folder, 
-                        latent_dim=latent_dim, 
-                        channels=channels, 
-                        input_dim=input_dim)
+
+    # plot_reconstruction(X_train.dataset, 
+    #                     vae = VAE,
+    #                     name="Training_images_reconstructed", 
+    #                     results_folder=results_folder, 
+    #                     latent_dim=latent_dim, 
+    #                     channels=channels, 
+    #                     input_dim=input_dim)
+    
+
+    # plot_reconstruction(X_test.dataset, 
+    #                     vae = VAE,
+    #                     name="Test_images_reconstructed", 
+    #                     results_folder=results_folder, 
+    #                     latent_dim=latent_dim, 
+    #                     channels=channels, 
+    #                     input_dim=input_dim)
 
 

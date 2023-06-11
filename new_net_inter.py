@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 #from torchsummary import summary
 from tqdm import tqdm
 import os
-from new_net import log_Normal, log_standard_Normal, encoder, decoder, VAE, generate_image, plot_reconstruction
+from new_net import log_Normal, log_standard_Normal, encoder, decoder, VAE, generate_image, plot_reconstruction, plot_1_reconstruction
 from dataloader import BBBC
 
 def interpolate(v1, v2, Nstep):
@@ -82,7 +82,7 @@ main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
 
 
 exclude_dmso = False
-shuffle = False
+shuffle = True
 
 subset = (train_size, test_size)
 
@@ -163,3 +163,26 @@ plt.tight_layout()
 plt.title("Interpolation between two images")
 plt.savefig(results_folder + 'interpol.png')
 plt.show()
+
+for i, image in enumerate(X_train.dataset):
+    if i == 10:
+        break
+    plot_1_reconstruction(image['image'],
+                        vae = VAE,
+                        name="training" + '\n' + str(image['id']), 
+                        results_folder=results_folder, 
+                        latent_dim=latent_dim, 
+                        channels=channels, 
+                        input_dim=input_dim)
+    
+
+for i, image in enumerate(X_test.dataset):
+    if i == 10:
+        break
+    plot_1_reconstruction(image['image'],
+                        vae = VAE,
+                        name="test" + '\n' + str(image['id']), 
+                        results_folder=results_folder, 
+                        latent_dim=latent_dim, 
+                        channels=channels, 
+                        input_dim=input_dim)
