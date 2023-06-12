@@ -82,7 +82,7 @@ class decoder(nn.Module):
         self.final = nn.Sequential(
             nn.ConvTranspose2d(in_channels=hidden_channels[-1], out_channels=channels, kernel_size=(3,4), stride=(2,4), padding=(3,5), output_padding=(1,2)),
             nn.Flatten(start_dim=1),
-            #nn.Softmax(dim=1)
+            nn.Sigmoid()
         )
 
     def forward(self, x):
@@ -114,10 +114,10 @@ class VAE(nn.Module):
         return mu + torch.exp(0.5 * log_var) * self.eps
 
     def decode(self, z):
-        mu, log_var = torch.split(
+        mu, var = torch.split(
             self.decoder.forward(z), self.channels * self.input_dim * self.input_dim, dim=1)
-        std = torch.exp(log_var)
-        return mu, std
+        #std = torch.exp(log_var)
+        return mu, var
 
     def forward(self, x, beta = 0.1, save_latent = False):
         mu, log_var = self.encode(x)
@@ -141,18 +141,14 @@ class VAE(nn.Module):
         tqdm.write(
             f"ELBO: {elbo.item()}, Reconstruction error: {reconstruction_error.item()}, Regularizer: {regularizer.item()}")
 
-        return elbo, reconstruction_error, regularizer
+        return (elbo, reconstruction_error, regularizer) if not save_latent else (elbo, reconstruction_error, regularizer, z)
 
     def initialise(self):
         def _init_weights(m):
             if isinstance(m, nn.Linear):
-                nn.init.sparse_(m.weight, sparsity=0.1)
-                if m.bias is not None:
-                    m.bias.data.fill_(3)
-            elif isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
-                nn.init.dirac_(m.weight)
-                if m.bias is not None:
-                    m.bias.data.fill_(0)
+                nn.init.xavier_uniform_(
+                    m.weight, gain=nn.init.calculate_gain('leaky_relu'))
+                m.bias.data.fill_(0)
 
         self.apply(_init_weights)
 
@@ -166,7 +162,7 @@ class VAE(nn.Module):
         KLs = []
         ELBOs = []
 
-        # self.initialise()
+        self.initialise()
         self.train()
         for epoch in tqdm(range(epochs)):
             for batch in tqdm(dataloader):
@@ -195,9 +191,7 @@ class VAE(nn.Module):
 def generate_image(X, vae, latent_dim, channels, input_dim, batch_size=1):
     vae.eval()
     X = X.to(device)
-    mu, log_var = vae.encode(X.view(batch_size, channels, input_dim, input_dim))
-    eps = torch.normal(mean=0, std=torch.ones(latent_dim)).to(device)
-    z = mu + torch.exp(0.5 * log_var) * eps
+    _, _, _, z = vae(X.view(batch_size, channels, input_dim, input_dim), save_latent=True)
     mean, var = vae.decode(z)
     image = torch.normal(mean=mean, std=torch.sqrt(var)).to(device)
     image = image.view(channels, input_dim, input_dim)
@@ -286,7 +280,7 @@ if __name__ == "__main__":
     train_size = 20000
     test_size = 1000
 
-    # epochs, batch_size, train_size = 2, 1, 10
+    epochs, batch_size, train_size = 2, 1, 10
 
     # torch.backends.cudnn.deterministic = True
     # torch.manual_seed(42)
@@ -295,7 +289,7 @@ if __name__ == "__main__":
     from dataloader import BBBC
 
     main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
-    #main_path = "/Users/nikolaj/Fagprojekt/Data/"
+    main_path = "/Users/nikolaj/Fagprojekt/Data/"
 
 
     exclude_dmso = False
