@@ -139,7 +139,7 @@ class VAE(nn.Module):
         # self.initialise()
         self.train()
         for epoch in tqdm(range(epochs)):
-            for batch in tqdm(dataloader):
+            for batch in dataloader:
                 x = batch['image'].to(device)
                 optimizer.zero_grad()
                 elbo, RE, KL = self.forward(x)
