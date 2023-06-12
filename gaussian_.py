@@ -193,7 +193,7 @@ channels = 3
 train_size = 20000
 test_size = 1000
 
-#epochs, batch_size, train_size = 2, 1, 100
+# epochs, batch_size, train_size = 2, 1, 100
 
 # torch.backends.cudnn.deterministic = True
 # torch.manual_seed(42)
@@ -247,7 +247,7 @@ encoder_VAE, decoder_VAE, reconstruction_errors, regularizers, latent_space = VA
 
 
 
-results_folder = str(beta) + 'gaussian/'
+results_folder = str(0.1) + 'gaussian/'
 if not(os.path.exists(results_folder)):
     os.mkdir(results_folder)
 
