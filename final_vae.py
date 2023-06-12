@@ -288,9 +288,10 @@ if __name__ == "__main__":
     #latent_dim = 10
     #epochs, batch_size, train_size = 2, 10, 10
 
-    # torch.backends.cudnn.deterministic = True
-    # torch.manual_seed(42)
-    # torch.cuda.manual_seed(42)
+    torch.backends.cudnn.deterministic = True
+    torch.manual_seed(42)
+    torch.cuda.manual_seed(42)
+    np.random.seed(42)
 
     from dataloader import BBBC
 
@@ -342,14 +343,6 @@ if __name__ == "__main__":
 
     test_REs, test_KLs, test_ELBOs = VAE.test_VAE(dataloader=X_test)
 
-    np.savez("train_ELBOs.npz", train_ELBOs=train_ELBOs)
-    np.savez("train_REs.npz", train_REs=train_REs)
-    np.savez("train_KLs.npz", train_KLs=train_KLs)
-
-    np.savez("test_ELBOs.npz", test_ELBOs=test_ELBOs)
-    np.savez("test_REs.npz", test_REs=test_REs)
-    np.savez("test_KLs.npz", test_KLs=test_KLs)
-
 
     from interpolation import interpolate_between_two_images, interpolate_between_three_images
 
@@ -368,7 +361,13 @@ if __name__ == "__main__":
     
     if not(os.path.exists(test_images_folder)):
         os.mkdir(test_images_folder)
-
+    
+    np.savez(results_folder + "train_ELBOs.npz", train_ELBOs=train_ELBOs)
+    np.savez(results_folder + "train_REs.npz", train_REs=train_REs)
+    np.savez(results_folder + "train_KLs.npz", train_KLs=train_KLs)
+    np.savez(results_folder + "test_ELBOs.npz", test_ELBOs=test_ELBOs)
+    np.savez(results_folder + "test_REs.npz", test_REs=test_REs)
+    np.savez(results_folder + "test_KLs.npz", test_KLs=test_KLs)
 
 
     torch.save(encoder_VAE, results_folder + "encoder.pt")
