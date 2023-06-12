@@ -339,8 +339,7 @@ if __name__ == "__main__":
                             results_folder=train_images_folder, 
                             latent_dim=latent_dim, 
                             channels=channels, 
-                            input_dim=input_dim,
-                            plot_mean=False)
+                            input_dim=input_dim)
     
     if boolean:
         for index in indexes:
@@ -351,8 +350,7 @@ if __name__ == "__main__":
                                 results_folder=test_images_folder, 
                                 latent_dim=latent_dim, 
                                 channels=channels, 
-                                input_dim=input_dim,
-                                plot_mean=False)
+                                input_dim=input_dim)
     
     interpolate_between_two_images(VAE, 452305, 475106, main_path, results_folder=results_folder)
     interpolate_between_three_images(VAE, 452305, 475106, 273028, main_path, results_folder=results_folder)
