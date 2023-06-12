@@ -16,6 +16,7 @@ latent_dims = [150, 200, 250, 300, 350]
 
 latent_dim = latent_dims[index] 
 
+print("latent_dim:", latent_dim)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -29,8 +30,8 @@ channels = 3
 train_size = 30000
 test_size = 1000
 
-latent_dim = 10
-epochs, batch_size, train_size = 2, 10, 10
+#latent_dim = 10
+#epochs, batch_size, train_size = 2, 10, 10
 
 # torch.backends.cudnn.deterministic = True
 # torch.manual_seed(42)
@@ -85,15 +86,6 @@ encoder_VAE, decoder_VAE, train_REs, train_KLs, train_ELBOs = VAE.train_VAE(data
 
 test_REs, test_KLs, test_ELBOs = VAE.test_eval(dataloader=X_test)
 
-np.savez("train_ELBOs.npz", train_ELBOs=train_ELBOs)
-np.savez("train_REs.npz", train_REs=train_REs)
-np.savez("train_KLs.npz", train_KLs=train_KLs)
-
-np.savez("test_ELBOs.npz", test_ELBOs=test_ELBOs)
-np.savez("test_REs.npz", test_REs=test_REs)
-np.savez("test_KLs.npz", test_KLs=test_KLs)
-
-
 from interpolation import interpolate_between_two_images, interpolate_between_three_images
 
 # np.savez("latent_space_VAE.npz", latent_space=latent_space.detach().numpy())
@@ -113,6 +105,13 @@ if not(os.path.exists(test_images_folder)):
     os.mkdir(test_images_folder)
 
 
+np.savez(results_folder + "train_ELBOs.npz", train_ELBOs=train_ELBOs)
+np.savez(results_folder + "train_REs.npz", train_REs=train_REs)
+np.savez(results_folder + "train_KLs.npz", train_KLs=train_KLs)
+
+np.savez(results_folder + "test_ELBOs.npz", test_ELBOs=test_ELBOs)
+np.savez(results_folder + "test_REs.npz", test_REs=test_REs)
+np.savez(results_folder + "test_KLs.npz", test_KLs=test_KLs)
 
 torch.save(encoder_VAE, results_folder + "encoder.pt")
 torch.save(decoder_VAE, results_folder + "decoder.pt")
