@@ -7,3 +7,6 @@ __pycache__
 pt_save/
 ___ARKIV/
 *.pt
+dump/
+batch_1/
+final_testing/
