@@ -9,13 +9,6 @@ from tqdm import tqdm
 import os
 import sys
 
-index = int(sys.argv[1]) - 1
-
-betas = [0.1, 10]
-
-beta = betas[index] 
-
-print("beta = ", beta)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -58,11 +51,11 @@ class decoder(nn.Module):
         self.channels = channels
 
         self.input = nn.Linear(
-            latent_dim,  2 * 16 * self.input_dim * self.input_dim)
+            latent_dim,   16 * self.input_dim * self.input_dim)
         self.conv2 = nn.ConvTranspose2d(
             16, channels, kernel_size=5, stride=1, padding=5 - (self.input_dim % 5))
-        #self.output = nn.Linear(channels * self.input_dim * self.input_dim,
-        #                        2 * channels * self.input_dim * self.input_dim)
+        self.output = nn.Linear(channels * self.input_dim * self.input_dim,
+                                2 * channels * self.input_dim * self.input_dim)
 
         # self.softmax = nn.Softmax(dim=1)
         # self.softmax = nn.Sigmoid()
@@ -73,9 +66,9 @@ class decoder(nn.Module):
         x = x.view(-1, 16, self.input_dim, self.input_dim)
         x = self.conv2(x)
         x = nn.LeakyReLU(0.01)(x)
-        x = x.view(-1,  2 * self.channels * self.input_dim * self.input_dim)
-        #x = self.output(x)
-        #x = nn.LeakyReLU(0.01)(x)
+        x = x.view(-1,  self.channels * self.input_dim * self.input_dim)
+        x = self.output(x)
+        x = nn.LeakyReLU(0.01)(x)
         # x = self.softmax(x) # i dont think this is needed.. but maybe?
         return x
 
@@ -116,7 +109,6 @@ class VAE(nn.Module):
         log_posterior = log_Normal(z, mu, log_var)
         log_prior = log_standard_Normal(z)
 
-        print(decode_var)
         log_like = (1 / (2 * (decode_var)) * nn.functional.mse_loss(decode_mu, x.flatten(
             start_dim=1, end_dim=-1), reduction="none")) + 0.5 * torch.log(decode_var) + 0.5 * torch.log(2 * torch.tensor(np.pi))
         #print(decode_var)
@@ -127,20 +119,16 @@ class VAE(nn.Module):
         elbo = reconstruction_error + regularizer * self.beta
 
         tqdm.write(
-            f"ELBO: {elbo.item()}, Reconstruction error: {reconstruction_error.item()}, Regularizer: {regularizer.item()}")
+            f"ELBO: {elbo.item()}, Reconstruction error: {reconstruction_error.item()}, Regularizer: {regularizer.item()}, Variance: {torch.mean(decode_var).item()}")
 
         return elbo, reconstruction_error, regularizer
 
     def initialise(self):
         def _init_weights(m):
             if isinstance(m, nn.Linear):
-                nn.init.sparse_(m.weight, sparsity=0.1)
-                if m.bias is not None:
-                    m.bias.data.fill_(3)
-            elif isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
-                nn.init.dirac_(m.weight)
-                if m.bias is not None:
-                    m.bias.data.fill_(0)
+                nn.init.xavier_uniform_(
+                    m.weight, gain=nn.init.calculate_gain('leaky_relu'))
+                m.bias.data.fill_(0)
 
         self.apply(_init_weights)
 
@@ -153,7 +141,7 @@ class VAE(nn.Module):
         reconstruction_errors = []
         regularizers = []
 
-        # self.initialise()
+        self.initialise()
         self.train()
         for epoch in tqdm(range(epochs)):
             for batch in tqdm(dataloader):
@@ -197,7 +185,7 @@ def generate_image(X, vae, latent_dim, channels, input_dim, batch_size=1):
 
 latent_dim = 200
 epochs = 100
-batch_size = 40
+batch_size = 100
 
 input_dim = 68
 channels = 3
@@ -205,7 +193,7 @@ channels = 3
 train_size = 20000
 test_size = 1000
 
-# epochs, batch_size, train_size = 2, 1, 100
+#epochs, batch_size, train_size = 2, 1, 100
 
 # torch.backends.cudnn.deterministic = True
 # torch.manual_seed(42)
@@ -217,7 +205,7 @@ main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
 #main_path = "/Users/nikolaj/Fagprojekt/Data/"
 
 exclude_dmso = False
-shuffle = False
+shuffle = True
 
 subset = (train_size, test_size)
 
@@ -226,24 +214,24 @@ dataset_train = BBBC(folder_path=main_path + "singh_cp_pipeline_singlecell_image
                         subset=subset,
                         test=False,
                         exclude_dmso=exclude_dmso,
-                        shuffle=False)
+                        shuffle=shuffle)
 
 dataset_test = BBBC(folder_path=main_path + "singh_cp_pipeline_singlecell_images",
                         meta_path=main_path + "metadata.csv",
                         subset=subset,
                         test=True,
                         exclude_dmso=exclude_dmso,
-                        shuffle=False)
+                        shuffle=shuffle)
 
 
-X_train = DataLoader(dataset_train, batch_size=batch_size, shuffle=True)
-X_test = DataLoader(dataset_test, batch_size=batch_size, shuffle=True)
+X_train = DataLoader(dataset_train, batch_size=batch_size, shuffle=False)
+X_test = DataLoader(dataset_test, batch_size=batch_size, shuffle=False)
 
 VAE = VAE(
     latent_dim=latent_dim,
     input_dim=input_dim,
     channels=channels,
-    beta=beta,
+    beta=0.1,
 ).to(device)
 
 #print("VAE:")

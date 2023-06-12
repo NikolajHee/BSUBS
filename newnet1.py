@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
-#from torchsummary import summary
+# from torchsummary import summary
 from tqdm import tqdm
 import os
 
@@ -36,7 +36,7 @@ class encoder(nn.Module):
         save = []
         for h in self.hidden_channels:
             save.append(nn.Sequential(
-                nn.Conv2d(channels, out_channels=h, kernel_size=3, stride=2, padding=1),
+                nn.Conv2d(channels, out_channels=h, kernel_size=5, stride=1, padding=2),
                 nn.BatchNorm2d(h),
                 nn.LeakyReLU(leaky_relu_slope)
             ))
@@ -44,8 +44,7 @@ class encoder(nn.Module):
         
         self.encoder = nn.Sequential(*save)
         # final layer
-        self.to_latent = nn.Sequential(nn.Linear(self.hidden_channels[-1]*9*9, latent_dim * 2),
-                                       nn.LeakyReLU(leaky_relu_slope))
+        self.to_latent = nn.Sequential(nn.Linear(self.hidden_channels[-1]*68*68, latent_dim * 2))
 
     def forward(self, x):
         x = self.encoder(x)
@@ -64,14 +63,14 @@ class decoder(nn.Module):
 
 
         #* decoder layers
-        self.from_latent = nn.Linear(latent_dim, hidden_channels[0]*9*9)
+        self.from_latent = nn.Linear(latent_dim, hidden_channels[0]*68*68)
 
         # loop over hidden channels
         save = []
 
-        for i in range(len(hidden_channels) -1):
+        for i in range(len(hidden_channels) - 1):
             save.append(nn.Sequential(
-                nn.ConvTranspose2d(in_channels=hidden_channels[i], out_channels=hidden_channels[i+1], kernel_size=3, stride=2, padding=1, output_padding=1),
+                nn.ConvTranspose2d(in_channels=hidden_channels[i], out_channels=hidden_channels[i+1], kernel_size=5, stride=1, padding=2),
                 nn.BatchNorm2d(hidden_channels[i+1]),
                 nn.LeakyReLU(leaky_relu_slope)
             ))
@@ -80,14 +79,13 @@ class decoder(nn.Module):
 
         # final layer
         self.final = nn.Sequential(
-            nn.ConvTranspose2d(in_channels=hidden_channels[-1], out_channels=channels, kernel_size=(3,4), stride=(2,4), padding=(3,5), output_padding=(1,2)),
             nn.Flatten(start_dim=1),
-            nn.Sigmoid()
+            nn.Linear(channels * input_dim * input_dim, 2 * channels * input_dim * input_dim)
         )
 
     def forward(self, x):
         x = self.from_latent(x)
-        x = x.view(-1, self.hidden_channels[0], 9, 9)
+        x = x.view(-1, self.hidden_channels[0], 68, 68)
         x = self.decoder(x)
         x = self.final(x)
         return x
@@ -97,7 +95,7 @@ class VAE(nn.Module):
     def __init__(self, latent_dim, input_dim, channels, hidden_channels: list=[8, 16, 32]):
         super(VAE, self).__init__()
         self.encoder = encoder(input_dim, latent_dim, channels, hidden_channels)
-        self.decoder = decoder(input_dim, latent_dim, channels, [i for i in reversed(hidden_channels)])
+        self.decoder = decoder(input_dim, latent_dim, channels, [i for i in reversed(hidden_channels)] + [3])
         self.latent_dim = latent_dim
         self.channels = channels
         self.input_dim = input_dim
@@ -114,9 +112,9 @@ class VAE(nn.Module):
         return mu + torch.exp(0.5 * log_var) * self.eps
 
     def decode(self, z):
-        mu, var = torch.split(
+        mu, log_var = torch.split(
             self.decoder.forward(z), self.channels * self.input_dim * self.input_dim, dim=1)
-        #std = torch.exp(log_var)
+        var = torch.exp(log_var)
         return mu, var
 
     def forward(self, x, beta = 0.1, save_latent = False):
@@ -271,7 +269,7 @@ def plot_1_reconstruction(image,
 
 if __name__ == "__main__":
     latent_dim = 200
-    epochs = 120
+    epochs = 100
     batch_size = 100
 
     input_dim = 68
@@ -329,8 +327,8 @@ if __name__ == "__main__":
     if not boolean: 
         raise Warning("The number of unique drugs in the test set is not 13")
 
-    #print("VAE:")
-    #summary(VAE, input_size=(channels, input_dim, input_dim))
+    # print("VAE:")
+    # summary(VAE, input_size=(channels, input_dim, input_dim))
 
     encoder_VAE, decoder_VAE, REs, KLs, ELBOs = VAE.train_VAE(
         dataloader=X_train, epochs=epochs)
