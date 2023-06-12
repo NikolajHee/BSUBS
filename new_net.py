@@ -198,9 +198,7 @@ class VAE(nn.Module):
 def generate_image(X, vae, latent_dim, channels, input_dim, batch_size=1):
     vae.eval()
     X = X.to(device)
-    mu, log_var = vae.encode(X.view(batch_size, channels, input_dim, input_dim))
-    eps = torch.normal(mean=0, std=torch.ones(latent_dim)).to(device)
-    z = mu + torch.exp(0.5 * log_var) * eps
+    _, _, _, z = vae(X.view(1,3,68,68).to(device), save_latent=True)
     mean = vae.decode(z)
     image = torch.normal(mean=mean, std=0.05).to(device)
     image = image.view(channels, input_dim, input_dim)
