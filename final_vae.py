@@ -122,7 +122,7 @@ class VAE(nn.Module):
 
         #tqdm.write(
         #    f"ELBO: {elbo.item()}, Reconstruction error: {reconstruction_error.item()}, Regularizer: {regularizer.item()}, Variance: {torch.mean(decode_var).item()}")
-
+        print(f"ELBO: {elbo.item()}, Reconstruction error: {reconstruction_error.item()}, Regularizer: {regularizer.item()}, Variance: {torch.mean(decode_var).item()}")
         return  (elbo, reconstruction_error, regularizer) if not save_latent else (elbo, reconstruction_error, regularizer, z)
 
     def initialise(self):
@@ -144,7 +144,7 @@ class VAE(nn.Module):
         KLs = []
         ELBOs = []
 
-        self.initialise()
+        # self.initialise()
         self.train()
         for epoch in tqdm(range(epochs)):
             for batch in dataloader:
