@@ -114,8 +114,8 @@ np.savez(results_folder + "test_ELBOs.npz", test_ELBOs=test_ELBOs)
 np.savez(results_folder + "test_REs.npz", test_REs=test_REs)
 np.savez(results_folder + "test_KLs.npz", test_KLs=test_KLs)
 
-torch.save(encoder_VAE, results_folder + "encoder.pt")
-torch.save(decoder_VAE, results_folder + "decoder.pt")
+# torch.save(encoder_VAE, results_folder + "encoder.pt")
+# torch.save(decoder_VAE, results_folder + "decoder.pt")
 
 
 plot_ELBO(train_REs, train_KLs, train_ELBOs, name="ELBO-components", results_folder=results_folder)

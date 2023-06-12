@@ -76,6 +76,7 @@ class VAE(nn.Module):
         self.channels = channels
         self.input_dim = input_dim
         self.beta = beta
+        self.var = 0
 
     def encode(self, x):
         mu, log_var = torch.split(
@@ -100,7 +101,8 @@ class VAE(nn.Module):
         # decode_std = 0.1 * torch.ones(decode_mu.shape).to(device)
         log_posterior = log_Normal(z, mu, log_var)
         log_prior = log_standard_Normal(z)
-
+        
+        self.var = decode_var
         log_like = (1 / (2 * (decode_var)) * nn.functional.mse_loss(decode_mu, x.flatten(
             start_dim=1, end_dim=-1), reduction="none")) + 0.5 * torch.log(decode_var) + 0.5 * torch.log(2 * torch.tensor(np.pi))
         #print(decode_var)
@@ -110,8 +112,8 @@ class VAE(nn.Module):
 
         elbo = reconstruction_error + regularizer * self.beta
 
-        tqdm.write(
-            f"ELBO: {elbo.item()}, Reconstruction error: {reconstruction_error.item()}, Regularizer: {regularizer.item()}, Variance: {torch.mean(decode_var).item()}")
+        #tqdm.write(
+        #    f"ELBO: {elbo.item()}, Reconstruction error: {reconstruction_error.item()}, Regularizer: {regularizer.item()}, Variance: {torch.mean(decode_var).item()}")
 
         return  (elbo, reconstruction_error, regularizer) if not save_latent else (elbo, reconstruction_error, regularizer, z)
 
@@ -148,7 +150,7 @@ class VAE(nn.Module):
                 optimizer.step()
 
             tqdm.write(
-                f"Epoch: {epoch+1}, ELBO: {elbo.item()}, Reconstruction Error: {RE.item()}, Regularizer: {KL.item()}"
+                f"Epoch: {epoch+1}, ELBO: {elbo.item()}, Reconstruction Error: {RE.item()}, Regularizer: {KL.item()}, Variance: {torch.mean(self.var).item()}"
             )
 
         return (
@@ -361,8 +363,8 @@ if __name__ == "__main__":
 
 
 
-    torch.save(encoder_VAE, results_folder + "encoder.pt")
-    torch.save(decoder_VAE, results_folder + "decoder.pt")
+    # torch.save(encoder_VAE, results_folder + "encoder.pt")
+    # torch.save(decoder_VAE, results_folder + "decoder.pt")
 
 
     plot_ELBO(train_REs, train_KLs, train_ELBOs, name="ELBO-components", results_folder=results_folder)
