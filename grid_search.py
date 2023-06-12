@@ -83,7 +83,7 @@ if not boolean:
 
 encoder_VAE, decoder_VAE, train_REs, train_KLs, train_ELBOs = VAE.train_VAE(dataloader=X_train, epochs=epochs)
 
-test_REs, test_KLs, test_ELBOs = VAE.test_VAE(dataloader=X_test)
+test_REs, test_KLs, test_ELBOs = VAE.test_eval(dataloader=X_test)
 
 np.savez("train_ELBOs.npz", train_ELBOs=train_ELBOs)
 np.savez("train_REs.npz", train_REs=train_REs)
