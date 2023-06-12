@@ -159,6 +159,35 @@ class VAE(nn.Module):
             KLs,
             ELBOs
         )
+    
+    def test_eval(self, dataloader, save_latent=False, results_folder=''):
+        # only wors if len of dataloader is divisible by batch_size
+        REs, KLs, ELBOs = [], [], []
+
+        moa, compound = [], []
+
+        latent = np.zeros((latent_dim, len(dataloader) * dataloader.batch_size)).T
+        self.eval()
+        with torch.no_grad():
+            for i, batch in tqdm(enumerate(dataloader)):
+                x = batch["image"].to(device)
+
+                moa, compound = moa + batch["moa"], compound + batch["compound"]
+
+                if save_latent:
+                    elbo, RE, KL, z = self.forward(x, save_latent=save_latent)
+                    z = z.cpu().detach().numpy()
+                    latent[i*dataloader.batch_size:(i+1)*dataloader.batch_size, :] = z
+
+                else:
+                    elbo, RE, KL = self.forward(x)
+
+                REs, KLs, ELBOs = REs + [RE.item()], KLs + [KL.item()], ELBOs + [elbo.item()]
+
+            if save_latent: 
+                np.savez(results_folder + "latent_space.npz", z=latent, labels=moa, compound=compound)
+
+            return REs, KLs, ELBOs
 
 
 def generate_image(X, vae, latent_dim, channels, input_dim, batch_size=1):
@@ -299,8 +328,17 @@ if __name__ == "__main__":
     #print("VAE:")
     #summary(VAE, input_size=(channels, input_dim, input_dim))
 
-    encoder_VAE, decoder_VAE, REs, KLs, ELBOs = VAE.train_VAE(
-        dataloader=X_train, epochs=epochs)
+    encoder_VAE, decoder_VAE, train_REs, train_KLs, train_ELBOs = VAE.train_VAE(dataloader=X_train, epochs=epochs)
+
+    test_REs, test_KLs, test_ELBOs = VAE.test_VAE(dataloader=X_test)
+
+    np.savez("train_ELBOs.npz", train_ELBOs=train_ELBOs)
+    np.savez("train_REs.npz", train_REs=train_REs)
+    np.savez("train_KLs.npz", train_KLs=train_KLs)
+
+    np.savez("test_ELBOs.npz", test_ELBOs=test_ELBOs)
+    np.savez("test_REs.npz", test_REs=test_REs)
+    np.savez("test_KLs.npz", test_KLs=test_KLs)
 
 
     from interpolation import interpolate_between_two_images, interpolate_between_three_images
@@ -327,7 +365,7 @@ if __name__ == "__main__":
     torch.save(decoder_VAE, results_folder + "decoder.pt")
 
 
-    plot_ELBO(REs, KLs, ELBOs, name="ELBO-components", results_folder=results_folder)
+    plot_ELBO(train_REs, train_KLs, train_ELBOs, name="ELBO-components", results_folder=results_folder)
         
 
     for i, image in enumerate(X_train.dataset):

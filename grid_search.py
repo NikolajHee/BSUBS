@@ -1,146 +1,150 @@
-import os
-import sys
-from dataloader import BBBC
-from torch.utils.data import DataLoader
-from gaussian_bbbc import VAE, generate_image, log_Normal, log_standard_Normal, encoder, decoder
+
+from final_vae import VAE, plot_ELBO, plot_reconstruction, plot_1_reconstruction
 import torch
 import numpy as np
-import pandas as pd
+import os
 import matplotlib.pyplot as plt
-from torch.utils.data import Dataset
-if '___ARKIV' in os.listdir():
-    from torchsummary import summary
+from torch.utils.data import DataLoader
+from torchvision import transforms
+from tqdm import tqdm
+import sys
 
 
-latent_dim = sys.argv[1]
-latent_dim = int(latent_dim)
+index = int(sys.argv[1]) - 1
+
+latent_dims = [150, 200, 250, 300, 350]
+
+latent_dim = latent_dims[index] 
 
 
-plt.style.use('fivethirtyeight')
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-def plot_reconstruction(data, name, encoder_VAE, decoder_VAE, latent_dim, channels, input_dim, results_folder=''):
-        generated_images = []
-        for i in range(9):
-            image = generate_image(
-                data[i]['image'],
-                encoder_VAE,
-                decoder=decoder_VAE,
-                latent_dim=latent_dim,
-                channels=channels,
-                input_dim=input_dim,
-            )
-            generated_images.append(image)
-
-        fig, ax = plt.subplots(9, 2)
-        for i in range(9):
-            ax[i, 0].imshow(data[i]['image'].reshape((68,68,3)), cmap="gray")
-            ax[i, 0].set_xticks([])
-            ax[i, 0].set_yticks([])
-            ax[i, 1].imshow(generated_images[i].reshape((68,68,3)), cmap="gray")
-            ax[i, 1].set_xticks([])
-            ax[i, 1].set_yticks([])
-        fig.suptitle(name)
-        plt.savefig(results_folder + name + '.png')
-        plt.show()
-
-
-def plot_elbo(reconstruction_errors, regularizers, title, results_folder=''):
-    plt.plot(
-        np.arange(0, len(reconstruction_errors), 1),
-        reconstruction_errors,
-        label="Reconstruction Error",
-    )
-    plt.plot(np.arange(0, len(regularizers), 1), regularizers, label="Regularizer")
-    plt.xlabel("iterationns")
-    plt.title(title)
-    plt.legend()
-    plt.savefig(results_folder + title + '.png')
-    plt.show()
-    
-
-     
-
-
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-
-epochs = 200
-batch_size = 40
-
-train_size = 20000
-test_size = 1000
+#latent_dim = 200
+epochs = 105
+batch_size = 100
 
 input_dim = 68
 channels = 3
 
-subset = (train_size, train_size)
+train_size = 30000
+test_size = 1000
+
+latent_dim = 10
+epochs, batch_size, train_size = 2, 10, 10
+
+# torch.backends.cudnn.deterministic = True
+# torch.manual_seed(42)
+# torch.cuda.manual_seed(42)
+
+from dataloader import BBBC
+
+main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
+#main_path = "/Users/nikolaj/Fagprojekt/Data/"
 
 
-if '___ARKIV' in os.listdir():
-    main_path = "/Users/nikolaj/Fagprojekt/Data/"
-else:
-    main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
-    
+exclude_dmso = False
+shuffle = True
 
-folder_path = os.path.join(main_path, "singh_cp_pipeline_singlecell_images")
-meta_path= os.path.join(main_path, "metadata.csv")
+subset = (train_size, test_size)
 
 dataset_train = BBBC(folder_path=main_path + "singh_cp_pipeline_singlecell_images",
-                            meta_path=main_path + "metadata.csv",
-                            subset=subset,
-                            test=False,
-                            exclude_dmso=True,
-                            shuffle=True)
+                        meta_path=main_path + "metadata.csv",
+                        subset=subset,
+                        test=False,
+                        exclude_dmso=exclude_dmso,
+                        shuffle=shuffle)
 
 dataset_test = BBBC(folder_path=main_path + "singh_cp_pipeline_singlecell_images",
-                            meta_path=main_path + "metadata.csv",
-                            subset=subset,
-                            test=True,
-                            exclude_dmso=True,
-                            shuffle=True)
-
-X_train = DataLoader(
-    dataset_train,
-    batch_size=batch_size,
-    shuffle=True,
-)
-X_test = DataLoader(
-    dataset_test,
-    batch_size=batch_size,
-    shuffle=True,
-)
-
-print("sucessfully initialized dataloader")
+                        meta_path=main_path + "metadata.csv",
+                        subset=subset,
+                        test=True,
+                        exclude_dmso=exclude_dmso,
+                        shuffle=shuffle)
 
 
+X_train = DataLoader(dataset_train, batch_size=batch_size, shuffle=False)
+X_test = DataLoader(dataset_test, batch_size=batch_size, shuffle=False)
 
-name = "L=" + str(latent_dim) + ". "
-print(name)
-
-VAE_ = VAE(
+VAE = VAE(
     latent_dim=latent_dim,
     input_dim=input_dim,
-    channels=channels,
+    channels=channels
 ).to(device)
 
-if '___ARKIV' in os.listdir():
-    print("VAE:")
-    summary(VAE_, input_size=(channels, input_dim, input_dim))
 
-encoder_VAE, decoder_VAE, reconstruction_errors, regularizers, latent_space = VAE_.train_VAE(
-    dataloader=X_train, epochs=epochs)
+classes, indexes = np.unique(dataset_test.meta[dataset_test.col_names[-1]], return_index=True)
+boolean = len(classes) == 13 if not exclude_dmso else len(classes) == 12
+
+if not boolean: 
+    raise Warning("The number of unique drugs in the test set is not 13")
+
+#print("VAE:")
+#summary(VAE, input_size=(channels, input_dim, input_dim))
+
+encoder_VAE, decoder_VAE, train_REs, train_KLs, train_ELBOs = VAE.train_VAE(dataloader=X_train, epochs=epochs)
+
+test_REs, test_KLs, test_ELBOs = VAE.test_VAE(dataloader=X_test)
+
+np.savez("train_ELBOs.npz", train_ELBOs=train_ELBOs)
+np.savez("train_REs.npz", train_REs=train_REs)
+np.savez("train_KLs.npz", train_KLs=train_KLs)
+
+np.savez("test_ELBOs.npz", test_ELBOs=test_ELBOs)
+np.savez("test_REs.npz", test_REs=test_REs)
+np.savez("test_KLs.npz", test_KLs=test_KLs)
 
 
-#* Save results
+from interpolation import interpolate_between_two_images, interpolate_between_three_images
 
-results_folder = 'results/'
+# np.savez("latent_space_VAE.npz", latent_space=latent_space.detach().numpy())
+
+results_folder = 'L=' + str(latent_dim) + '. grid/'
 if not(os.path.exists(results_folder)):
     os.mkdir(results_folder)
-    
-plot_elbo(reconstruction_errors, regularizers, name + "ELBO", results_folder=results_folder)
-plot_reconstruction(X_train.dataset, name + "train reconstruction", encoder_VAE, decoder_VAE, latent_dim, channels, input_dim, results_folder=results_folder)
-plot_reconstruction(X_test.dataset, name + "test reconstruction", encoder_VAE, decoder_VAE, latent_dim, channels, input_dim, results_folder=results_folder)
 
-print("sucessfully saved results for " + name)
+train_images_folder = results_folder +'train_images/'
+
+test_images_folder = results_folder + 'test_images/'
+
+if not(os.path.exists(train_images_folder)):
+    os.mkdir(train_images_folder)
+
+if not(os.path.exists(test_images_folder)):
+    os.mkdir(test_images_folder)
+
+
+
+torch.save(encoder_VAE, results_folder + "encoder.pt")
+torch.save(decoder_VAE, results_folder + "decoder.pt")
+
+
+plot_ELBO(train_REs, train_KLs, train_ELBOs, name="ELBO-components", results_folder=results_folder)
+    
+
+for i, image in enumerate(X_train.dataset):
+    if i == 10:
+        break
+    plot_1_reconstruction(image['image'],
+                        vae = VAE,
+                        name="Train " + str(image['id']), 
+                        results_folder=train_images_folder, 
+                        latent_dim=latent_dim, 
+                        channels=channels, 
+                        input_dim=input_dim)
+
+if boolean:
+    for index in indexes:
+        image = dataset_test[index]
+        plot_1_reconstruction(image['image'],
+                            vae = VAE,
+                            name=image['moa'] + ' ' + str(image['id']), 
+                            results_folder=test_images_folder, 
+                            latent_dim=latent_dim, 
+                            channels=channels, 
+                            input_dim=input_dim)
+
+interpolate_between_two_images(VAE, 452305, 475106, main_path, results_folder=results_folder)
+interpolate_between_three_images(VAE, 452305, 475106, 273028, main_path, results_folder=results_folder)
+
 
 
