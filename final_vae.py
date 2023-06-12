@@ -84,7 +84,7 @@ class VAE(nn.Module):
         return mu, log_var
 
     def reparameterization(self, mu, log_var):
-        self.eps = torch.normal(mean=0, std=torch.ones(latent_dim)).to(device)
+        self.eps = torch.normal(mean=0, std=torch.ones(self.latent_dim)).to(device)
         return mu + torch.exp(0.5 * log_var) * self.eps
 
     def decode(self, z):
