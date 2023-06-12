@@ -7,7 +7,6 @@ from torch.utils.data import DataLoader
 #from torchsummary import summary
 from tqdm import tqdm
 import os
-import sys
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -69,7 +68,7 @@ class decoder(nn.Module):
 
 
 class VAE(nn.Module):
-    def __init__(self, latent_dim, input_dim, channels, beta = 1):
+    def __init__(self, latent_dim, input_dim, channels, beta = 1.0):
         super(VAE, self).__init__()
         self.encoder = encoder(input_dim, latent_dim, channels)
         self.decoder = decoder(input_dim, latent_dim, channels)
@@ -315,7 +314,8 @@ if __name__ == "__main__":
     VAE = VAE(
         latent_dim=latent_dim,
         input_dim=input_dim,
-        channels=channels
+        channels=channels,
+        beta=0.1
     ).to(device)
     
 

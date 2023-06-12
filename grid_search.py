@@ -70,7 +70,8 @@ X_test = DataLoader(dataset_test, batch_size=batch_size, shuffle=False)
 VAE = VAE(
     latent_dim=latent_dim,
     input_dim=input_dim,
-    channels=channels
+    channels=channels,
+    beta=0.1,
 ).to(device)
 
 
