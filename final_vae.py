@@ -94,21 +94,29 @@ class VAE(nn.Module):
         return mu, std
 
     def forward(self, x, save_latent = False):
+        #* kl divergence
         mu, log_var = self.encode(x)
         z = self.reparameterization(mu, log_var)
 
-        decode_mu, decode_var = self.decode(z)
-        # decode_std = 0.1 * torch.ones(decode_mu.shape).to(device)
+
         log_posterior = log_Normal(z, mu, log_var)
+
         log_prior = log_standard_Normal(z)
         
+        regularizer = - torch.sum(log_prior - log_posterior, dim=-1).mean() 
+
+        #* reconstruction error
+        decode_mu, decode_var = self.decode(z)
+
+        # save variance for printing
         self.var = decode_var
+
         log_like = (1 / (2 * (decode_var)) * nn.functional.mse_loss(decode_mu, x.flatten(
             start_dim=1, end_dim=-1), reduction="none")) + 0.5 * torch.log(decode_var) + 0.5 * torch.log(2 * torch.tensor(np.pi))
-        #print(decode_var)
+
 
         reconstruction_error = torch.sum(log_like, dim=-1).mean()
-        regularizer = - torch.sum(log_prior - log_posterior, dim=-1).mean() 
+        
 
         elbo = reconstruction_error + regularizer * self.beta
 

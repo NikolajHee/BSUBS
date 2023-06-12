@@ -106,9 +106,9 @@ if not(os.path.exists(test_images_folder)):
     os.mkdir(test_images_folder)
 
 
-np.savez(results_folder + "train_ELBOs.npz", train_ELBOs=train_ELBOs)
-np.savez(results_folder + "train_REs.npz", train_REs=train_REs)
-np.savez(results_folder + "train_KLs.npz", train_KLs=train_KLs)
+# np.savez(results_folder + "train_ELBOs.npz", train_ELBOs=train_ELBOs)
+# np.savez(results_folder + "train_REs.npz", train_REs=train_REs)
+# np.savez(results_folder + "train_KLs.npz", train_KLs=train_KLs)
 
 np.savez(results_folder + "test_ELBOs.npz", test_ELBOs=test_ELBOs)
 np.savez(results_folder + "test_REs.npz", test_REs=test_REs)
