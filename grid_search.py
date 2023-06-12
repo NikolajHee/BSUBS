@@ -26,8 +26,8 @@ batch_size = 100
 input_dim = 68
 channels = 3
 
-train_size = 10000
-test_size = 1000
+train_size = 390716
+test_size = 97679
 
 #latent_dim = 10
 #epochs, batch_size, train_size = 2, 10, 10
@@ -63,8 +63,8 @@ dataset_test = BBBC(folder_path=main_path + "singh_cp_pipeline_singlecell_images
                         shuffle=shuffle)
 
 
-X_train = DataLoader(dataset_train, batch_size=batch_size, shuffle=False)
-X_test = DataLoader(dataset_test, batch_size=batch_size, shuffle=False)
+X_train = DataLoader(dataset_train, batch_size=batch_size, shuffle=False, drop_last=True)
+X_test = DataLoader(dataset_test, batch_size=batch_size, shuffle=False, drop_last=True)
 
 VAE = VAE(
     latent_dim=latent_dim,

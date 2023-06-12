@@ -275,18 +275,18 @@ def plot_ELBO(REs, KLs, ELBOs, name, results_folder):
 
 if __name__ == "__main__":
 
-    latent_dim = 200
-    epochs = 105
+    latent_dim = 300
+    epochs = 120
     batch_size = 100
 
     input_dim = 68
     channels = 3
 
-    train_size = 30000
-    test_size = 1000
+    train_size = 390716
+    test_size = 97679
 
-    latent_dim = 10
-    epochs, batch_size, train_size = 2, 10, 10
+    #latent_dim = 10
+    #epochs, batch_size, train_size = 2, 10, 10
 
     # torch.backends.cudnn.deterministic = True
     # torch.manual_seed(42)
@@ -318,8 +318,8 @@ if __name__ == "__main__":
                             shuffle=shuffle)
 
 
-    X_train = DataLoader(dataset_train, batch_size=batch_size, shuffle=False)
-    X_test = DataLoader(dataset_test, batch_size=batch_size, shuffle=False)
+    X_train = DataLoader(dataset_train, batch_size=batch_size, shuffle=False, drop_last=True)
+    X_test = DataLoader(dataset_test, batch_size=batch_size, shuffle=False, drop_last=True)
 
     VAE = VAE(
         latent_dim=latent_dim,
@@ -371,8 +371,8 @@ if __name__ == "__main__":
 
 
 
-    # torch.save(encoder_VAE, results_folder + "encoder.pt")
-    # torch.save(decoder_VAE, results_folder + "decoder.pt")
+    torch.save(encoder_VAE, results_folder + "encoder.pt")
+    torch.save(decoder_VAE, results_folder + "decoder.pt")
 
 
     plot_ELBO(train_REs, train_KLs, train_ELBOs, name="ELBO-components", results_folder=results_folder)
