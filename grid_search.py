@@ -33,9 +33,10 @@ test_size = 1000
 #latent_dim = 10
 #epochs, batch_size, train_size = 2, 10, 10
 
-# torch.backends.cudnn.deterministic = True
-# torch.manual_seed(42)
-# torch.cuda.manual_seed(42)
+torch.backends.cudnn.deterministic = True
+torch.manual_seed(42)
+torch.cuda.manual_seed(42)
+np.random.seed(42)
 
 from dataloader import BBBC
 
