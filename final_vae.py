@@ -144,7 +144,7 @@ class VAE(nn.Module):
         KLs = []
         ELBOs = []
 
-        # self.initialise()
+        self.initialise()
         self.train()
         for epoch in tqdm(range(epochs)):
             for batch in dataloader:
@@ -235,12 +235,12 @@ def plot_1_reconstruction(image,
     ax[0].imshow(image.reshape((68,68,3)), cmap="gray")
     ax[0].set_xticks([])
     ax[0].set_yticks([])
-    ax[0].set_title('Original', fontname="Times New Roman", size=22,fontweight="bold")
+    ax[0].set_title('Original',  size=22,fontweight="bold")
     ax[1].imshow(recon_image.reshape((68,68,3)), cmap="gray")
     ax[1].set_xticks([])
     ax[1].set_yticks([])
-    ax[1].set_title('Reconstruction', fontname="Times New Roman", size=22,fontweight="bold")
-    fig.suptitle(name, fontname='Times New Roman', size=26, fontweight='bold')
+    ax[1].set_title('Reconstruction', size=22,fontweight="bold")
+    fig.suptitle(name,  size=26, fontweight='bold')
     plt.tight_layout()
     plt.savefig(results_folder + name +'.png')
     plt.show()

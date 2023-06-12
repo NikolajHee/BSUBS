@@ -20,7 +20,9 @@ class BBBC(Dataset):
         try:
             self.meta = pd.read_csv(meta_path, index_col=0)
         except:
+            # this could also be other errors, but this is the most likely
             raise ValueError("Please change variable 'main_path' to the path of the data folder (should contain metadata.csv, ...)")
+        
         self.col_names = self.meta.columns
         self.folder_path = folder_path
         self.train_size, self.test_size = subset
@@ -34,11 +36,6 @@ class BBBC(Dataset):
         
     def __len__(self,):
         return self.test_size if self.test else self.train_size
-    
-    def normalize_to_255(self, x):
-        # helper function to normalize to {0,1,...,255}
-        to_255 = (x/np.max(x)) * 255
-        return to_255.astype(np.uint8).reshape((3,68,68))
 
     def normalize_to_1(self, x):
         # helper function to normalize to [0...1]
