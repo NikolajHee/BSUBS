@@ -25,8 +25,8 @@ def interpolate_between_two_images(vae, index_image_1, index_image_2, main_path,
     generated_images = []
 
     for z in interpolate(z1, z2, 9):
-        mean = vae.decode(z)
-        image = torch.normal(mean=mean, std=0.05).to(device)
+        mean, var = vae.decode(z)
+        image = torch.normal(mean=mean, std=torch.sqrt(var)).to(device)
         image = image.view(channels, input_dim, input_dim)
         image = image.clip(0,1).detach().cpu().numpy()  
         generated_images.append(image)
@@ -70,8 +70,8 @@ def interpolate_between_three_images(vae, index_image_1, index_image_2, index_im
     
     for i, z_ in enumerate(interpolate(z1, z2, 9)):
         for z in interpolate(z1+z_, z3+z_, 9):
-            mean = vae.decode(z)
-            image = torch.normal(mean=mean, std=0.05).to(device)
+            mean, var = vae.decode(z)
+            image = torch.normal(mean=mean, std=torch.sqrt(var)).to(device)
             image = image.view(channels, input_dim, input_dim)
             image = image.clip(0,1).detach().cpu().numpy()  
             generated_images[i].append(image)
