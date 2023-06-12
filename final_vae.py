@@ -166,7 +166,7 @@ class VAE(nn.Module):
 
         moa, compound = [], []
 
-        latent = np.zeros((latent_dim, len(dataloader) * dataloader.batch_size)).T
+        latent = np.zeros((self.latent_dim, len(dataloader) * dataloader.batch_size)).T
         self.eval()
         with torch.no_grad():
             for i, batch in tqdm(enumerate(dataloader)):
