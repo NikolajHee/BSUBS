@@ -271,7 +271,7 @@ class Semi_supervised_VAE(nn.Module):
             tqdm.write(
                 f"Epoch: {epoch+1}, ELBO: {ELBO.item()}, Reconstruction Error: {reconstruction_error.item()}, Regularizer: {KL.item()}")
 
-        return self.encoder, self.decoder, reconstruction_errors, KL
+        return self.encoder, self.decoder, reconstruction_errors, KLs
 
     def test_eval(self, dataloader, save_latent=False, results_folder=''):
         # only wors if len of dataloader is divisible by batch_size
@@ -379,7 +379,7 @@ input_dim = 28
 channels = 1
 classes = 10
 
-train_size = 1000
+train_size = 30000
 test_size = 1000
 
 trainset = datasets.MNIST(
