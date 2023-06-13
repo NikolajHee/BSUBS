@@ -428,12 +428,6 @@ if not(os.path.exists(train_images_folder)):
 if not(os.path.exists(test_images_folder)):
     os.mkdir(test_images_folder)
 
-print(type(reconstruction_errors))
-print(type(regularizers))
-print(type(reconstruction_errors[0]))
-print(type(regularizers[0]))
-
-
 
 for i, (image, label) in enumerate(Xy_train):
     plot_1_reconstruction(image[0], VAE, 'semi_train_' + str(i), latent_dim, channels, input_dim, train_images_folder)
