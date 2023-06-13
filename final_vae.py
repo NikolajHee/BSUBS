@@ -112,7 +112,7 @@ class VAE(nn.Module):
         self.var = decode_var
 
         log_like = (1 / (2 * (decode_var)) * nn.functional.mse_loss(decode_mu, x.flatten(
-            start_dim=1, end_dim=-1), reduction="none")) + 0.5 * torch.log(decode_var * 2 * np.pi/(self.input_dim * self.input_dim * self.channels)**2)
+            start_dim=1, end_dim=-1), reduction="none")) + 0.5 * (self.input_dim * self.input_dim * self.channels) * torch.log(decode_var * 2 * np.pi)
 
 
         reconstruction_error = torch.sum(log_like, dim=-1).mean()
