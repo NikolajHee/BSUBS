@@ -112,7 +112,7 @@ class VAE(nn.Module):
         self.var = decode_var
 
         log_like = (1 / (2 * (decode_var)) * nn.functional.mse_loss(decode_mu, x.flatten(
-            start_dim=1, end_dim=-1), reduction="none")) + 0.5 * torch.log(decode_var) + 0.5 * torch.log(2 * torch.tensor(np.pi))
+            start_dim=1, end_dim=-1), reduction="none")) + 0.5 * torch.log(decode_var * 2 * np.pi/(self.input_dim * self.input_dim * self.channels)**2)
 
 
         reconstruction_error = torch.sum(log_like, dim=-1).mean()
@@ -276,14 +276,14 @@ def plot_ELBO(REs, KLs, ELBOs, name, results_folder):
 if __name__ == "__main__":
 
     latent_dim = 300
-    epochs = 120
+    epochs = 100
     batch_size = 100
 
     input_dim = 68
     channels = 3
 
-    train_size = 390716
-    test_size = 97679
+    train_size = 10000
+    test_size = 1000
 
     #latent_dim = 10
     #epochs, batch_size, train_size = 2, 10, 10
@@ -348,7 +348,7 @@ if __name__ == "__main__":
 
     # np.savez("latent_space_VAE.npz", latent_space=latent_space.detach().numpy())
 
-    results_folder = 'new_net/'
+    results_folder = 'final_vae/'
     if not(os.path.exists(results_folder)):
         os.mkdir(results_folder)
 
