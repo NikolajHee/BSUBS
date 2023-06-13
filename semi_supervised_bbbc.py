@@ -435,8 +435,8 @@ if __name__ == "__main__":
     
 
 
-    classes, indexes = np.unique(dataset_test.meta[dataset_test.col_names[-1]], return_index=True)
-    boolean = len(classes) == 13 if not exclude_dmso else len(classes) == 12
+    classes_, indexes = np.unique(dataset_test.meta[dataset_test.col_names[-1]], return_index=True)
+    boolean = len(classes_) == 13 if not exclude_dmso else len(classes_) == 12
 
     if not boolean: 
        raise Warning("The number of unique drugs in the test set is not 13")
