@@ -7,6 +7,8 @@ from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 
 
+# to(device) in unlabbeled_elbo and labelled_elbo
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
@@ -145,7 +147,7 @@ class Semi_supervised_VAE(nn.Module):
 
     def ELBO_unlabelled(self, y_prob, reconstruction_error, KL):
         H = - torch.sum(torch.log(y_prob) * y_prob, dim=-1).mean()
-        K_1 = - log_standard_Categorical(torch.tensor([0]), self.classes)
+        K_1 = - (log_standard_Categorical(torch.tensor([0]), self.classes)).to(device)
 
         Lxy = reconstruction_error + KL + K_1
         q_Lxy = torch.sum(y_prob * Lxy.view(-1, 1), dim=-1).mean()
@@ -155,7 +157,7 @@ class Semi_supervised_VAE(nn.Module):
         return ELBO
 
     def ELBO_labelled(self, y, y_prob, reconstruction_error, KL):
-        K_1 = - log_standard_Categorical(y, self.classes)
+        K_1 = - (log_standard_Categorical(y, self.classes)).to(device)
         log_like_y = - log_Categorical(y, y_prob, self.classes)
 
         Lxy = (reconstruction_error + KL + K_1).mean()
