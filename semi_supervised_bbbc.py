@@ -392,8 +392,8 @@ if __name__ == "__main__":
     input_dim = 68
     channels = 3
 
-    train_size = 100_000
-    test_size = 10_000
+    train_size = 10_000
+    test_size = 2_000
 
     # latent_dim = 10
     #epochs, batch_size, train_size = 2, 10, 10
@@ -458,7 +458,7 @@ if __name__ == "__main__":
 
     print('tested VAE')
 
-    results_folder = 'semi_bbbc/'
+    results_folder = 'semi_bbbc_little/'
     if not(os.path.exists(results_folder)):
         os.mkdir(results_folder)
 
