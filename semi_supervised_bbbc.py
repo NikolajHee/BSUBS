@@ -98,17 +98,14 @@ class classifier(nn.Module):
         self.input_dim = input_dim
         self.channels = channels
 
-        self.conv1 = nn.Conv2d(channels, 8, kernel_size=5, padding="same")
-        self.conv2 = nn.Conv2d(8, 16, kernel_size=5, padding="same")
+        self.conv1 = nn.Conv2d(channels, 16, kernel_size=5, padding="same")
         self.fully_connected = nn.Linear(
             16 * self.input_dim * self.input_dim, self.classes)
         self.softmax = nn.Softmax(dim=1)
 
     def forward(self, x):
         x = self.conv1(x)
-        x = nn.functional.relu(x)
-        x = self.conv2(x)
-        x = nn.functional.relu(x)
+        x = nn.LeakyReLU(0.01)(x)
         x = x.view(-1, 16 * self.input_dim * self.input_dim)
         x = self.fully_connected(x)
         x = self.softmax(x)
@@ -126,6 +123,8 @@ class Semi_supervised_VAE(nn.Module):
         self.alpha = 0.1
         self.middel_dim = 16 * input_dim * input_dim
 
+        self.eps = torch.normal(mean=0, std=torch.ones(self.latent_dim)).to(device)
+
         self.encoder = encoder(input_dim, self.middel_dim, channels)
         self.decoder = decoder(input_dim, self.middel_dim, channels)
         self.classifier = classifier(classes, input_dim, channels)
@@ -141,7 +140,6 @@ class Semi_supervised_VAE(nn.Module):
         return mu, log_var
 
     def reparameterization(self, mu, log_var):
-        self.eps = torch.normal(mean=0, std=torch.ones(self.latent_dim)).to(device)
         return mu + torch.exp(0.5*log_var) * self.eps
 
     def decode(self, z, y_hat):

@@ -91,15 +91,12 @@ class classifier(nn.Module):
         self.channels = channels
 
         self.conv1 = nn.Conv2d(channels, 8, kernel_size=5, padding="same")
-        self.conv2 = nn.Conv2d(8, 16, kernel_size=5, padding="same")
         self.fully_connected = nn.Linear(
-            16 * self.input_dim * self.input_dim, self.classes)
+            8 * self.input_dim * self.input_dim, self.classes)
         self.softmax = nn.Softmax(dim=1)
 
     def forward(self, x):
         x = self.conv1(x)
-        x = nn.functional.relu(x)
-        x = self.conv2(x)
         x = nn.functional.relu(x)
         x = x.view(-1, 16 * self.input_dim * self.input_dim)
         x = self.fully_connected(x)
