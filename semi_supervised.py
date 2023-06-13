@@ -40,17 +40,15 @@ class encoder(nn.Module):
     def __init__(self, input_dim, middel_dim, channels):
         super(encoder, self).__init__()
         self.input_dim = input_dim
+
         self.conv1 = nn.Conv2d(channels, 16, kernel_size=5, padding="same")
-        self.conv2 = nn.Conv2d(16, 32, kernel_size=5, padding="same")
         self.fully_connected = nn.Linear(
-            32 * self.input_dim * self.input_dim, middel_dim)
+            16 * self.input_dim * self.input_dim, middel_dim)
 
     def forward(self, x):
         x = self.conv1(x)
-        x = nn.functional.relu(x)
-        x = self.conv2(x)
-        x = nn.functional.relu(x)
-        x = x.view(-1, 32 * self.input_dim * self.input_dim)
+        x = nn.LeakyReLU(0.01)(x)
+        x = x.view(-1, 16 * self.input_dim * self.input_dim)
         x = self.fully_connected(x)
         return x
 
@@ -62,26 +60,23 @@ class decoder(nn.Module):
         self.channels = channels
 
         self.input = nn.Linear(
-            middel_dim, 32 * self.input_dim * self.input_dim)
-        self.conv1 = nn.ConvTranspose2d(
-            32, 16, kernel_size=5, stride=1, padding=5 - (self.input_dim % 5))
+            middel_dim,   16 * self.input_dim * self.input_dim)
         self.conv2 = nn.ConvTranspose2d(
             16, channels, kernel_size=5, stride=1, padding=5 - (self.input_dim % 5))
-        self.fully_connected = nn.Linear(
-            channels * self.input_dim * self.input_dim, 2 * channels * self.input_dim * self.input_dim)
-        self.softmax = nn.Softmax(dim=2)
+        self.output = nn.Linear(channels * self.input_dim * self.input_dim,
+                                2 * channels * self.input_dim * self.input_dim)
+
 
     def forward(self, x):
         x = self.input(x)
-        x = nn.functional.relu(x)
-        x = x.view(-1, 32, self.input_dim, self.input_dim)
-        x = self.conv1(x)
-        x = nn.functional.relu(x)
+        x = nn.LeakyReLU(0.01)(x)
+        x = x.view(-1, 16, self.input_dim, self.input_dim)
         x = self.conv2(x)
-        x = nn.functional.relu(x)
-        x = x.view(-1, self.channels * self.input_dim * self.input_dim)
-        x = self.fully_connected(x)
+        x = nn.LeakyReLU(0.01)(x)
+        x = x.view(-1,  self.channels * self.input_dim * self.input_dim)
+        x = self.output(x)
         return x
+
 
 
 class classifier(nn.Module):
@@ -302,6 +297,8 @@ Xy_train = DataLoader(Xy_train, batch_size=batch_size, shuffle=True)
 Xy_test = TensorDataset(testset.data[:test_size].reshape(
     (test_size, channels, input_dim, input_dim)).float(), testset.targets[:test_size])
 Xy_test = DataLoader(Xy_test, batch_size=batch_size, shuffle=True)
+
+print('initialized dataloaders')
 
 # X = np.load("image_matrix.npz")["images"][:1000]
 # X = torch.tensor(X, dtype=torch.float32).permute(0, 3, 1, 2)
