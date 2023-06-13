@@ -121,7 +121,7 @@ class Semi_supervised_VAE(nn.Module):
         self.channels = channels
         self.input_dim = input_dim
         self.alpha = 0.1
-        self.middel_dim = 100 # input_dim * input_dim
+        self.middel_dim = 32 # input_dim * input_dim
 
         self.eps = torch.normal(mean=0, std=torch.ones(self.latent_dim)).to(device)
 
