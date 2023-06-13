@@ -114,7 +114,6 @@ class VAE(nn.Module):
         log_like = (1 / (2 * (decode_var)) * nn.functional.mse_loss(decode_mu, x.flatten(
             start_dim=1, end_dim=-1), reduction="none")) + 0.5 * torch.log(decode_var) + 0.5 * torch.log(2 * torch.tensor(np.pi))
 
-
         reconstruction_error = torch.sum(log_like, dim=-1).mean()
         
 
@@ -321,6 +320,7 @@ if __name__ == "__main__":
 
     X_train = DataLoader(dataset_train, batch_size=batch_size, shuffle=False, drop_last=True)
     X_test = DataLoader(dataset_test, batch_size=batch_size, shuffle=False, drop_last=True)
+
 
     VAE = VAE(
         latent_dim=latent_dim,

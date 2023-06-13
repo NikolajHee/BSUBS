@@ -113,9 +113,10 @@ class classifier(nn.Module):
 
 
 class Semi_supervised_VAE(nn.Module):
-    def __init__(self, classes, latent_dim, input_dim, channels):
+    def __init__(self, classes, latent_dim, input_dim, channels, dmso_label=0):
         super(Semi_supervised_VAE, self).__init__()
 
+        self.dmso_label = dmso_label
         self.latent_dim = latent_dim
         self.classes = classes
         self.channels = channels
@@ -176,7 +177,7 @@ class Semi_supervised_VAE(nn.Module):
     def forward(self, x, y, save_latent=False):
         # y_onehot = nn.functional.one_hot(y, num_classes=self.classes).float()
 
-        idx = y != "DMSO"  # "DMSO"
+        idx = y != self.dmso_label # "DMSO"
 
         # y_labelled = y_onehot[idx]
         y_labelled = y[idx]
@@ -433,10 +434,12 @@ if __name__ == "__main__":
     loader_train = DataLoader(dataset_train, batch_size=batch_size, shuffle=False, drop_last=True)
     loader_test = DataLoader(dataset_test, batch_size=batch_size, shuffle=False, drop_last=True)
     
+    dmso_label = loader_train.dataset.label_encoder.transform(['DMSO'])[0]
+
     print('initialized dataloaders')
 
     VAE = Semi_supervised_VAE(classes=classes, latent_dim=latent_dim,
-                            input_dim=input_dim, channels=channels).to(device)
+                            input_dim=input_dim, channels=channels, dmso_label = dmso_label).to(device)
     
     print('initialized VAE')
 
