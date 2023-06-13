@@ -121,7 +121,7 @@ class Semi_supervised_VAE(nn.Module):
         self.channels = channels
         self.input_dim = input_dim
         self.alpha = 0.1
-        self.middel_dim = 16 * input_dim * input_dim
+        self.middel_dim = 16 # input_dim * input_dim
 
         self.eps = torch.normal(mean=0, std=torch.ones(self.latent_dim)).to(device)
 
@@ -440,7 +440,7 @@ if __name__ == "__main__":
     
     print('initialized VAE')
 
-    raise ValueError('stop here')
+    #raise ValueError('stop here')
 
     trained_encoder, trained_decoder, train_REs, train_KLs, train_ELBOs = VAE.train_VAE(
         dataloader=loader_train, epochs=epochs)
