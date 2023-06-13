@@ -113,9 +113,10 @@ class classifier(nn.Module):
 
 
 class Semi_supervised_VAE(nn.Module):
-    def __init__(self, classes, latent_dim, input_dim, channels):
+    def __init__(self, classes, latent_dim, input_dim, channels, dmso_label=0):
         super(Semi_supervised_VAE, self).__init__()
 
+        self.dmso_label = dmso_label
         self.latent_dim = latent_dim
         self.classes = classes
         self.channels = channels
@@ -176,10 +177,13 @@ class Semi_supervised_VAE(nn.Module):
     def forward(self, x, y, save_latent=False):
         # y_onehot = nn.functional.one_hot(y, num_classes=self.classes).float()
 
-        idx = y != "DMSO"  # "DMSO"
+        idx =  y != "DMSO" # "DMSO"
 
         # y_labelled = y_onehot[idx]
         y_labelled = y[idx]
+        y_labelled = torch.tensor(y_labelled).to(device)
+        idx = torch.tensor(idx).to(device)
+
 
         y_hat = self.classify(x)
         mu, log_var = self.encode(x, y_hat)
@@ -259,7 +263,7 @@ class Semi_supervised_VAE(nn.Module):
         for epoch in tqdm(range(epochs)):
             for batch in dataloader:
                 x = batch['image'].to(device)
-                y = batch['moa'].to(device)
+                y = np.array(batch['moa'])
 
                 optimizer.zero_grad()
                 elbo, RE, KL = self.forward(x, y)
@@ -433,10 +437,12 @@ if __name__ == "__main__":
     loader_train = DataLoader(dataset_train, batch_size=batch_size, shuffle=False, drop_last=True)
     loader_test = DataLoader(dataset_test, batch_size=batch_size, shuffle=False, drop_last=True)
     
+    dmso_label = loader_train.dataset.label_encoder.transform(['DMSO'])[0]
+
     print('initialized dataloaders')
 
     VAE = Semi_supervised_VAE(classes=classes, latent_dim=latent_dim,
-                            input_dim=input_dim, channels=channels).to(device)
+                            input_dim=input_dim, channels=channels, dmso_label = dmso_label).to(device)
     
     print('initialized VAE')
 
