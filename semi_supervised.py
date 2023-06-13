@@ -271,10 +271,7 @@ class Semi_supervised_VAE(nn.Module):
             tqdm.write(
                 f"Epoch: {epoch+1}, ELBO: {ELBO.item()}, Reconstruction Error: {reconstruction_error.item()}, Regularizer: {KL.item()}")
 
-        mu, log_var = self.encode(x)
-        latent_space = self.reparameterization(mu, log_var)
-
-        return self.encoder, self.decoder, reconstruction_errors, KL, latent_space
+        return self.encoder, self.decoder, reconstruction_errors, KL
 
 
 def generate_image(X, vae, latent_dim, channels, input_dim, batch_size=1):
@@ -379,7 +376,7 @@ VAE = Semi_supervised_VAE(classes=classes, latent_dim=latent_dim,
 # total_input_size = abs(np.prod([np.prod(in_size) for in_size in input_size]) * batch_size * 4. / (1024 ** 2.))
 # summary(VAE, input_size=[(batch_size, channels, input_dim, input_dim), (batch_size,)])
 
-encoder_VAE, decoder_VAE, reconstruction_errors, regularizers, latent_space = VAE.train_VAE(
+encoder_VAE, decoder_VAE, reconstruction_errors, regularizers = VAE.train_VAE(
     dataloader=Xy_train, epochs=epochs)
 
 
