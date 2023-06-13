@@ -284,7 +284,7 @@ if __name__ == "__main__":
     test_size = 10_000
 
     latent_dim = 10
-    epochs, batch_size, train_size, test_size = 2, 10, 10, 1000
+    epochs, batch_size, train_size, test_size = 2, 10, 10, 2000
 
     torch.backends.cudnn.deterministic = True
     torch.manual_seed(42)
