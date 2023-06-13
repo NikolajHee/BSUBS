@@ -467,10 +467,10 @@ if __name__ == "__main__":
 
 
     for i, (image) in enumerate(loader_train):
-        plot_1_reconstruction(image[0], VAE, 'semi_train_' + str(i), latent_dim, channels, input_dim, train_images_folder)
+        plot_1_reconstruction(image['image'], VAE, 'semi_train_' + str(i), latent_dim, channels, input_dim, train_images_folder)
 
     for i, (image) in enumerate(loader_test):
-        plot_1_reconstruction(image[0], VAE, 'semi_test_' + str(i), latent_dim, channels, input_dim, test_images_folder)
+        plot_1_reconstruction(image['image'], VAE, 'semi_test_' + str(i), latent_dim, channels, input_dim, test_images_folder)
 
 
     plot_ELBO(train_REs, train_KLs, 'semi', results_folder)
