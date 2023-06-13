@@ -21,13 +21,13 @@ print("latent_dim:", latent_dim)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 epochs = 100
-batch_size = 400
+batch_size = 100
 
 input_dim = 68
 channels = 3
 
-train_size = 390716
-test_size = 97679
+train_size = 100000
+test_size = 10000
 
 #latent_dim = 10
 #epochs, batch_size, train_size = 2, 10, 10
