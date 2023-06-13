@@ -347,11 +347,11 @@ def plot_1_reconstruction(image,
     fig, ax = plt.subplots(1, 2, figsize=(10,6))
 
     ax = ax.flatten()
-    ax[0].imshow(image.reshape((28,28,1)), cmap="gray")
+    ax[0].imshow(image.reshape((input_dim,input_dim,channels)), cmap="gray")
     ax[0].set_xticks([])
     ax[0].set_yticks([])
     ax[0].set_title('Original',  size=22,fontweight="bold")
-    ax[1].imshow(recon_image.reshape((28,28,1)), cmap="gray")
+    ax[1].imshow(recon_image.reshape((input_dim,input_dim,channels)), cmap="gray")
     ax[1].set_xticks([])
     ax[1].set_yticks([])
     ax[1].set_title('Reconstruction', size=22,fontweight="bold")
