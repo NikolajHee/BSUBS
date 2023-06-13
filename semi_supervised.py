@@ -168,7 +168,7 @@ class Semi_supervised_VAE(nn.Module):
 
         return ELBO
 
-    def forward(self, x, y):
+    def forward(self, x, y, save_latent=False):
         # y_onehot = nn.functional.one_hot(y, num_classes=self.classes).float()
 
         idx = y != 0  # "DMSO"
@@ -224,7 +224,7 @@ class Semi_supervised_VAE(nn.Module):
         tqdm.write(
             f"ELBO: {ELBO.item()}, Reconstruction error: {reconstruction_error.item()}, Regularizer: {KL.item()}")
 
-        return ELBO, reconstruction_error, KL
+        return (ELBO, reconstruction_error, KL) if not save_latent else (ELBO, reconstruction_error, KL, z)
 
     def initialise(self):
         def _init_weights(m):
@@ -272,6 +272,37 @@ class Semi_supervised_VAE(nn.Module):
                 f"Epoch: {epoch+1}, ELBO: {ELBO.item()}, Reconstruction Error: {reconstruction_error.item()}, Regularizer: {KL.item()}")
 
         return self.encoder, self.decoder, reconstruction_errors, KL
+
+    def test_eval(self, dataloader, save_latent=False, results_folder=''):
+        # only wors if len of dataloader is divisible by batch_size
+        REs, KLs, ELBOs = [], [], []
+
+        moa, compound = [], []
+
+        latent = np.zeros((self.latent_dim, len(dataloader) * dataloader.batch_size)).T
+        self.eval()
+        with torch.no_grad():
+            for i, batch in tqdm(enumerate(dataloader)):
+                x = batch["image"].to(device)
+
+                moa, compound = moa + batch["moa"], compound + batch["compound"]
+
+                if save_latent:
+                    elbo, RE, KL, z = self.forward(x, save_latent=save_latent)
+                    z = z.cpu().detach().numpy()
+                    latent[i*dataloader.batch_size:(i+1)*dataloader.batch_size, :] = z
+
+                else:
+                    elbo, RE, KL = self.forward(x)
+
+                REs, KLs, ELBOs = REs + [RE.item()], KLs + [KL.item()], ELBOs + [elbo.item()]
+
+            if save_latent: 
+                np.savez(results_folder + "latent_space.npz", z=latent, labels=moa, compound=compound)
+
+            return REs, KLs, ELBOs
+        
+
 
 
 def generate_image(X, vae, latent_dim, channels, input_dim, batch_size=1):
@@ -397,6 +428,10 @@ if not(os.path.exists(train_images_folder)):
 if not(os.path.exists(test_images_folder)):
     os.mkdir(test_images_folder)
 
+print(type(reconstruction_errors))
+print(type(regularizers))
+print(type(reconstruction_errors[0]))
+print(type(regularizers[0]))
 
 
 
