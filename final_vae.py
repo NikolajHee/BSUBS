@@ -282,8 +282,8 @@ if __name__ == "__main__":
     input_dim = 68
     channels = 3
 
-    train_size = 100000
-    test_size = 10000
+    train_size = 1000
+    test_size = 1000
 
     #latent_dim = 10
     #epochs, batch_size, train_size = 2, 10, 10
@@ -341,7 +341,7 @@ if __name__ == "__main__":
 
     encoder_VAE, decoder_VAE, train_REs, train_KLs, train_ELBOs = VAE.train_VAE(dataloader=X_train, epochs=epochs)
 
-    test_REs, test_KLs, test_ELBOs = VAE.test_eval(dataloader=X_test)
+    test_REs, test_KLs, test_ELBOs = VAE.test_eval(dataloader=X_test, save_latent=True)
 
 
     from interpolation import interpolate_between_two_images, interpolate_between_three_images
