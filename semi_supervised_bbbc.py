@@ -113,10 +113,9 @@ class classifier(nn.Module):
 
 
 class Semi_supervised_VAE(nn.Module):
-    def __init__(self, classes, latent_dim, input_dim, channels, dmso_label=0):
+    def __init__(self, classes, latent_dim, input_dim, channels):
         super(Semi_supervised_VAE, self).__init__()
 
-        self.dmso_label = dmso_label
         self.latent_dim = latent_dim
         self.classes = classes
         self.channels = channels
@@ -437,12 +436,10 @@ if __name__ == "__main__":
     loader_train = DataLoader(dataset_train, batch_size=batch_size, shuffle=False, drop_last=True)
     loader_test = DataLoader(dataset_test, batch_size=batch_size, shuffle=False, drop_last=True)
     
-    dmso_label = loader_train.dataset.label_encoder.transform(['DMSO'])[0]
-
     print('initialized dataloaders')
 
     VAE = Semi_supervised_VAE(classes=classes, latent_dim=latent_dim,
-                            input_dim=input_dim, channels=channels, dmso_label = dmso_label).to(device)
+                            input_dim=input_dim, channels=channels).to(device)
     
     print('initialized VAE')
 
