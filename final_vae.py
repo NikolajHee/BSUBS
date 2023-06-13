@@ -180,7 +180,7 @@ class VAE(nn.Module):
             for i, batch in tqdm(enumerate(dataloader)):
                 x = batch["image"].to(device)
 
-                moa, compound = moa + batch["moa"], compound + batch["compound"]
+                moa, compound = moa + batch["moa_name"], compound + batch["compound"]
 
                 if save_latent:
                     elbo, RE, KL, z = self.forward(x, save_latent=save_latent)
@@ -259,7 +259,7 @@ def plot_ELBO(REs, KLs, ELBOs, name, results_folder):
              linestyle='-', linewidth=4, alpha=0.5)
     plt.legend(fontsize=15)
     plt.title(name, size=26, fontweight='bold')
-    plt.xlabel('Epoch',  size=22, fontweight='bold')
+    plt.xlabel('Iterations',  size=22, fontweight='bold')
     plt.ylabel('Loss',  size=22, fontweight='bold')
     plt.tick_params(axis='both', which='major', labelsize=18)
     plt.tight_layout()
@@ -280,11 +280,11 @@ if __name__ == "__main__":
     input_dim = 68
     channels = 3
 
-    train_size = 100000
-    test_size = 10000
+    train_size = 100_000
+    test_size = 10_000
 
-    #latent_dim = 10
-    #epochs, batch_size, train_size = 2, 10, 10
+    latent_dim = 10
+    epochs, batch_size, train_size, test_size = 2, 10, 10, 100
 
     torch.backends.cudnn.deterministic = True
     torch.manual_seed(42)
@@ -333,23 +333,22 @@ if __name__ == "__main__":
     boolean = len(classes) == 13 if not exclude_dmso else len(classes) == 12
 
     if not boolean: 
-        raise Warning("The number of unique drugs in the test set is not 13")
+       raise Warning("The number of unique drugs in the test set is not 13")
 
     #print("VAE:")
     #summary(VAE, input_size=(channels, input_dim, input_dim))
     results_folder = 'final_vae/'
 
+    if not(os.path.exists(results_folder)):
+        os.mkdir(results_folder)
+
+
     encoder_VAE, decoder_VAE, train_REs, train_KLs, train_ELBOs = VAE.train_VAE(dataloader=X_train, epochs=epochs)
 
     test_REs, test_KLs, test_ELBOs = VAE.test_eval(dataloader=X_test, save_latent=True, results_folder=results_folder)
 
-
-    from interpolation import interpolate_between_two_images, interpolate_between_three_images
-
     # np.savez("latent_space_VAE.npz", latent_space=latent_space.detach().numpy())
     
-    if not(os.path.exists(results_folder)):
-        os.mkdir(results_folder)
 
     train_images_folder = results_folder +'train_images/'
 
@@ -392,11 +391,15 @@ if __name__ == "__main__":
             image = dataset_test[index]
             plot_1_reconstruction(image['image'],
                                 vae = VAE,
-                                name=image['moa'] + ' ' + str(image['id']), 
+                                name=image['moa_name'] + ' ' + str(image['id']), 
                                 results_folder=test_images_folder, 
                                 latent_dim=latent_dim, 
                                 channels=channels, 
                                 input_dim=input_dim)
+            
+    
+    
+    from interpolation import interpolate_between_two_images, interpolate_between_three_images
     
     interpolate_between_two_images(VAE, 452305, 475106, main_path, results_folder=results_folder)
     interpolate_between_three_images(VAE, 452305, 475106, 273028, main_path, results_folder=results_folder)

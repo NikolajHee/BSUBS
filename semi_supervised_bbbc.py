@@ -373,7 +373,7 @@ def plot_ELBO(REs, KLs, ELBOs, name, results_folder):
              linestyle='-', linewidth=4, alpha=0.5)
     plt.legend(fontsize=15)
     plt.title(name, size=26, fontweight='bold')
-    plt.xlabel('Epoch',  size=22, fontweight='bold')
+    plt.xlabel('Iterations',  size=22, fontweight='bold')
     plt.ylabel('Loss',  size=22, fontweight='bold')
     plt.tick_params(axis='both', which='major', labelsize=18)
     plt.tight_layout()
@@ -383,7 +383,7 @@ def plot_ELBO(REs, KLs, ELBOs, name, results_folder):
 
 
 if __name__ == "__main__":
-    latent_dim = 250
+    latent_dim = 300
     epochs = 100
     batch_size = 100
 
@@ -433,14 +433,21 @@ if __name__ == "__main__":
     loader_train = DataLoader(dataset_train, batch_size=batch_size, shuffle=False, drop_last=True)
     loader_test = DataLoader(dataset_test, batch_size=batch_size, shuffle=False, drop_last=True)
     
+
+
+    classes, indexes = np.unique(dataset_test.meta[dataset_test.col_names[-1]], return_index=True)
+    boolean = len(classes) == 13 if not exclude_dmso else len(classes) == 12
+
+    if not boolean: 
+       raise Warning("The number of unique drugs in the test set is not 13")
+
+
     print('initialized dataloaders')
 
     VAE = Semi_supervised_VAE(classes=classes, latent_dim=latent_dim,
                             input_dim=input_dim, channels=channels).to(device)
     
     print('initialized VAE')
-
-    #raise ValueError('stop here')
 
     trained_encoder, trained_decoder, train_REs, train_KLs, train_ELBOs = VAE.train_VAE(
         dataloader=loader_train, epochs=epochs)
@@ -466,15 +473,6 @@ if __name__ == "__main__":
         os.mkdir(test_images_folder)
 
 
-    for i in range(10):
-        image = dataset_train[i]
-        plot_1_reconstruction(image['image'], VAE, 'semi_train_' + str(i), latent_dim, channels, input_dim, train_images_folder)
-
-    for i in range(10):
-        image = dataset_test[i]
-        plot_1_reconstruction(image['image'], VAE, 'semi_test_' + str(i), latent_dim, channels, input_dim, test_images_folder)
-
-
     plot_ELBO(train_REs, train_KLs, test_ELBOs, 'semi', results_folder)
 
 
@@ -488,6 +486,40 @@ if __name__ == "__main__":
 
     # torch.save(trained_encoder, results_folder + "encoder.pt")
     # torch.save(trained_decoder, results_folder + "decoder.pt")
+
+
+    for i, image in enumerate(loader_train.dataset):
+        if i == 10:
+            break
+        plot_1_reconstruction(image['image'],
+                            vae = VAE,
+                            name="Train " + str(image['id']), 
+                            results_folder=train_images_folder, 
+                            latent_dim=latent_dim, 
+                            channels=channels, 
+                            input_dim=input_dim)
+    
+    if boolean:
+        for index in indexes:
+            image = dataset_test[index]
+            plot_1_reconstruction(image['image'],
+                                vae = VAE,
+                                name=image['moa_name'] + ' ' + str(image['id']), 
+                                results_folder=test_images_folder, 
+                                latent_dim=latent_dim, 
+                                channels=channels, 
+                                input_dim=input_dim)
+            
+    
+    
+    from interpolation import interpolate_between_two_images, interpolate_between_three_images
+    
+    interpolate_between_two_images(VAE, 452305, 475106, main_path, results_folder=results_folder)
+    interpolate_between_three_images(VAE, 452305, 475106, 273028, main_path, results_folder=results_folder)
+
+
+
+
 
 
 
