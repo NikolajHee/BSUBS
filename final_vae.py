@@ -112,7 +112,7 @@ class VAE(nn.Module):
         self.var = decode_var
 
         log_like = (1 / (2 * (decode_var)) * nn.functional.mse_loss(decode_mu, x.flatten(
-            start_dim=1, end_dim=-1), reduction="none")) + 0.5 * (self.input_dim * self.input_dim * self.channels) * torch.log(decode_var * 2 * np.pi)
+            start_dim=1, end_dim=-1), reduction="none")) + 0.5 * torch.log(decode_var) + 0.5 * torch.log(2 * torch.tensor(np.pi))
 
 
         reconstruction_error = torch.sum(log_like, dim=-1).mean()
@@ -282,8 +282,8 @@ if __name__ == "__main__":
     input_dim = 68
     channels = 3
 
-    train_size = 10000
-    test_size = 1000
+    train_size = 100000
+    test_size = 10000
 
     #latent_dim = 10
     #epochs, batch_size, train_size = 2, 10, 10
@@ -341,7 +341,7 @@ if __name__ == "__main__":
 
     encoder_VAE, decoder_VAE, train_REs, train_KLs, train_ELBOs = VAE.train_VAE(dataloader=X_train, epochs=epochs)
 
-    test_REs, test_KLs, test_ELBOs = VAE.test_VAE(dataloader=X_test)
+    test_REs, test_KLs, test_ELBOs = VAE.test_eval(dataloader=X_test)
 
 
     from interpolation import interpolate_between_two_images, interpolate_between_three_images
