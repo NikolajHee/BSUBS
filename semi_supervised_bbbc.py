@@ -281,7 +281,7 @@ class Semi_supervised_VAE(nn.Module):
             ELBOs
         )
 
-    def test_eval(self, dataloader, save_latent=False, results_folder=''):
+    def test_VAE(self, dataloader, save_latent=False, results_folder=''):
         # only wors if len of dataloader is divisible by batch_size
         REs, KLs, ELBOs = [], [], []
 
