@@ -5,8 +5,6 @@ import torch.nn as nn
 from torchvision import datasets
 from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
-from sklearn import svm
-from torchsummary import summary
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -296,9 +294,11 @@ trainset = datasets.MNIST(
     root='./MNIST', train=True, download=True, transform=None)
 testset = datasets.MNIST(
     root='./MNIST', train=False, download=True, transform=None)
+
 Xy_train = TensorDataset(trainset.data[:train_size].reshape(
     (train_size, channels, input_dim, input_dim)).float(), trainset.targets[:train_size])
 Xy_train = DataLoader(Xy_train, batch_size=batch_size, shuffle=True)
+
 Xy_test = TensorDataset(testset.data[:test_size].reshape(
     (test_size, channels, input_dim, input_dim)).float(), testset.targets[:test_size])
 Xy_test = DataLoader(Xy_test, batch_size=batch_size, shuffle=True)
