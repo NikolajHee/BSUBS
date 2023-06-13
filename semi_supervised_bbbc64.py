@@ -121,7 +121,7 @@ class Semi_supervised_VAE(nn.Module):
         self.channels = channels
         self.input_dim = input_dim
         self.alpha = 0.1
-        self.middel_dim = 8 # input_dim * input_dim
+        self.middel_dim = 64 # input_dim * input_dim
 
         self.eps = torch.normal(mean=0, std=torch.ones(self.latent_dim)).to(device)
 
@@ -458,7 +458,7 @@ if __name__ == "__main__":
 
     print('tested VAE')
 
-    results_folder = 'semi_bbbc_little/'
+    results_folder = 'semi_bbbc_little64/'
     if not(os.path.exists(results_folder)):
         os.mkdir(results_folder)
 
