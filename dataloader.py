@@ -88,6 +88,7 @@ class BBBC(Dataset):
                   "image": torch.tensor(image), 
                   "moa": self.label_encoder(moa), 
                   "compound": compound,
+                  "moa_name": moa,
                   }
 
         return sample

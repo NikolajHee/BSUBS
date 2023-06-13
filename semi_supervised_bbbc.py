@@ -294,7 +294,7 @@ class Semi_supervised_VAE(nn.Module):
                 x = batch["image"].to(device)
                 y = batch["moa"].to(device)
 
-                moa, compound = moa + batch["moa"], compound + batch["compound"]
+                moa, compound = moa + batch["moa_name"], compound + batch["compound"]
 
                 if save_latent:
                     elbo, RE, KL, z = self.forward(x, y, save_latent=save_latent)
