@@ -277,10 +277,11 @@ class Semi_supervised_VAE(nn.Module):
 def generate_image(X, vae, latent_dim, channels, input_dim, batch_size=1):
     vae.eval()
     X = X.to(device)
-    mu, log_var = vae.encode(X)
+    y_hat = vae.classify(X)
+    mu, log_var = vae.encode(X, y_hat)
     eps = torch.normal(mean=0, std=torch.ones(latent_dim)).to(device)
     z = mu + torch.exp(0.5 * log_var) * eps
-    mean, var = vae.decode(z)
+    mean, var = vae.decode(z, y_hat)
     image = torch.normal(mean=mean, std=torch.sqrt(var)).to(device)
     image = image.view(channels, input_dim, input_dim)
     image = image.clip(0,1).detach().cpu().numpy()
@@ -396,10 +397,6 @@ if not(os.path.exists(train_images_folder)):
 if not(os.path.exists(test_images_folder)):
     os.mkdir(test_images_folder)
 
-plot_ELBO(reconstruction_errors, regularizers, 'semi', results_folder)
-
-
-
 
 
 
@@ -408,6 +405,10 @@ for i, (image, label) in enumerate(Xy_train):
 
 for i, (image, label) in enumerate(Xy_test):
     plot_1_reconstruction(image[0], VAE, 'semi_test_' + str(i), latent_dim, channels, input_dim, test_images_folder)
+
+
+
+plot_ELBO(reconstruction_errors, regularizers, 'semi', results_folder)
 
 
 
