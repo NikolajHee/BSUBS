@@ -39,7 +39,7 @@ class BBBC(Dataset):
         return self.test_size if self.test else self.train_size
     
 
-    def LabelEncoder(self, x):
+    def label_encoder(self, x):
         classes = np.array(['DMSO', 'Actin disruptors', 'Aurora kinase inhibitors',
        'Cholesterol-lowering', 'DNA damage', 'DNA replication',
        'Eg5 inhibitors', 'Epithelial', 'Kinase inhibitors',
@@ -48,6 +48,15 @@ class BBBC(Dataset):
         
         return np.where(classes == x)[0][0]
     
+    def label_decoder(self, x):
+        classes = np.array(['DMSO', 'Actin disruptors', 'Aurora kinase inhibitors',
+       'Cholesterol-lowering', 'DNA damage', 'DNA replication',
+       'Eg5 inhibitors', 'Epithelial', 'Kinase inhibitors',
+       'Microtubule destabilizers', 'Microtubule stabilizers',
+       'Protein degradation', 'Protein synthesis'])
+        
+        return classes[x]
+
 
     def normalize_to_1(self, x):
         # helper function to normalize to [0...1]
@@ -77,7 +86,7 @@ class BBBC(Dataset):
 
         sample = {"id": id, 
                   "image": torch.tensor(image), 
-                  "moa": self.LabelEncoder(moa), 
+                  "moa": self.label_encoder(moa), 
                   "compound": compound,
                   }
 

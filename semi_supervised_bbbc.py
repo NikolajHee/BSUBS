@@ -270,7 +270,7 @@ class Semi_supervised_VAE(nn.Module):
                 optimizer.step()
 
             tqdm.write(
-                f"Epoch: {epoch+1}, ELBO: {elbo.item()}, Reconstruction Error: {RE.item()}, Regularizer: {KL.item()}, Variance: {torch.mean(self.var).item()}"
+                f"Epoch: {epoch+1}, ELBO: {elbo.item()}, Reconstruction Error: {RE.item()}, Regularizer: {KL.item()}"
             )
 
         return (
