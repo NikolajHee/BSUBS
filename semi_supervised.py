@@ -5,6 +5,8 @@ import torch.nn as nn
 from torchvision import datasets
 from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
+import sys
+import os
 
 
 # to(device) in unlabbeled_elbo and labelled_elbo
@@ -275,11 +277,75 @@ class Semi_supervised_VAE(nn.Module):
         return self.encoder, self.decoder, reconstruction_errors, KL, latent_space
 
 
+def generate_image(X, vae, latent_dim, channels, input_dim, batch_size=1):
+    vae.eval()
+    X = X.to(device)
+    mu, log_var = vae.encode(X)
+    eps = torch.normal(mean=0, std=torch.ones(latent_dim)).to(device)
+    z = mu + torch.exp(0.5 * log_var) * eps
+    mean, var = vae.decode(z)
+    image = torch.normal(mean=mean, std=torch.sqrt(var)).to(device)
+    image = image.view(channels, input_dim, input_dim)
+    image = image.clip(0,1).detach().cpu().numpy()
+    return image
+
+
+def plot_1_reconstruction(image, 
+                        vae,
+                        name, 
+                        latent_dim, 
+                        channels, 
+                        input_dim, 
+                        results_folder=''):
+    recon_image = generate_image(
+        image,
+        vae=vae,
+        latent_dim=latent_dim,
+        channels=channels,
+        input_dim=input_dim,
+    )
+
+
+    fig, ax = plt.subplots(1, 2, figsize=(10,6))
+
+    ax = ax.flatten()
+    ax[0].imshow(image.reshape((28,28,1)), cmap="gray")
+    ax[0].set_xticks([])
+    ax[0].set_yticks([])
+    ax[0].set_title('Original',  size=22,fontweight="bold")
+    ax[1].imshow(recon_image.reshape((28,28,1)), cmap="gray")
+    ax[1].set_xticks([])
+    ax[1].set_yticks([])
+    ax[1].set_title('Reconstruction', size=22,fontweight="bold")
+    fig.suptitle(name,  size=26, fontweight='bold')
+    plt.tight_layout()
+    plt.savefig(results_folder + name +'.png')
+    plt.show()
+    plt.close()
+
+def plot_ELBO(REs, KLs, name, results_folder):
+    fig = plt.figure(figsize=(10,6))
+    plt.plot(REs, label='Reconstruction Error', color='red', 
+             linestyle='--', linewidth=2, alpha=0.5)
+    
+    plt.plot(KLs, label='Regularizer', color='blue', 
+             linestyle='--', linewidth=2, alpha=0.5)
+    plt.legend(fontsize=15)
+    plt.title(name, size=26, fontweight='bold')
+    plt.xlabel('Epoch',  size=22, fontweight='bold')
+    plt.ylabel('Loss',  size=22, fontweight='bold')
+    plt.tick_params(axis='both', which='major', labelsize=18)
+    plt.tight_layout()
+    plt.savefig(results_folder + name + '.png')
+    plt.show()
+    plt.close()
+
+
+
 latent_dim = 50
 epochs = 5
 batch_size = 10
 
-pixel_range = 256
 input_dim = 28
 channels = 1
 classes = 10
@@ -315,3 +381,39 @@ VAE = Semi_supervised_VAE(classes=classes, latent_dim=latent_dim,
 
 encoder_VAE, decoder_VAE, reconstruction_errors, regularizers, latent_space = VAE.train_VAE(
     dataloader=Xy_train, epochs=epochs)
+
+
+results_folder = 'semi_vae/'
+if not(os.path.exists(results_folder)):
+    os.mkdir(results_folder)
+
+
+
+train_images_folder = results_folder +'train_images/'
+
+test_images_folder = results_folder + 'test_images/'
+
+if not(os.path.exists(train_images_folder)):
+    os.mkdir(train_images_folder)
+
+if not(os.path.exists(test_images_folder)):
+    os.mkdir(test_images_folder)
+
+plot_ELBO(reconstruction_errors, regularizers, 'semi', results_folder)
+
+
+
+
+for i, (image, label) in enumerate(Xy_train):
+    plot_1_reconstruction(image[0], VAE, 'semi_train_' + str(i), latent_dim, channels, input_dim, train_images_folder)
+
+for i, (image, label) in enumerate(Xy_test):
+    plot_1_reconstruction(image[0], VAE, 'semi_test_' + str(i), latent_dim, channels, input_dim, test_images_folder)
+
+
+
+
+
+
+
+
