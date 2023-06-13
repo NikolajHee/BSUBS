@@ -9,8 +9,10 @@ import sys
 import os
 
 
-# todo: seed
-# todo: latent spcace
+# tod o: seed
+
+
+# todo: latent space
 # todo: decoder/encoder
 # todo: elbo / REs / KLs
 # todo: save test_elbo, test_re, test_kl
@@ -124,8 +126,6 @@ class Semi_supervised_VAE(nn.Module):
         self.alpha = 0.1
         self.middel_dim = 32 * input_dim * input_dim
 
-        self.eps = torch.normal(mean=0, std=torch.ones(latent_dim)).to(device)
-
         self.encoder = encoder(input_dim, self.middel_dim, channels)
         self.decoder = decoder(input_dim, self.middel_dim, channels)
         self.classifier = classifier(classes, input_dim, channels)
@@ -141,6 +141,7 @@ class Semi_supervised_VAE(nn.Module):
         return mu, log_var
 
     def reparameterization(self, mu, log_var):
+        self.eps = torch.normal(mean=0, std=torch.ones(self.latent_dim)).to(device)
         return mu + torch.exp(0.5*log_var) * self.eps
 
     def decode(self, z, y_hat):
@@ -177,7 +178,7 @@ class Semi_supervised_VAE(nn.Module):
     def forward(self, x, y, save_latent=False):
         # y_onehot = nn.functional.one_hot(y, num_classes=self.classes).float()
 
-        idx = y != 0  # "DMSO"
+        idx = y != "DMSO"  # "DMSO"
 
         # y_labelled = y_onehot[idx]
         y_labelled = y[idx]
@@ -245,39 +246,42 @@ class Semi_supervised_VAE(nn.Module):
 
         self.apply(_init_weights)
 
-    def train_VAE(self, dataloader, epochs, lr=10e-6):
-        parameters = [param for param in self.parameters()
-                      if param.requires_grad == True]
+    def train_VAE(self, dataloader, epochs, lr=10e-5):
+        parameters = [
+            param for param in self.parameters() if param.requires_grad == True
+        ]
         optimizer = torch.optim.Adam(parameters, lr=lr)
 
-        self.train()
-        self.initialise()
-
-        ELBOs = []
-        reconstruction_errors = []
+        REs = []
         KLs = []
+        ELBOs = []
 
-        self.alpha = 0.1 * dataloader.__len__()
+        self.initialise()
+        self.train()
         for epoch in tqdm(range(epochs)):
-            for x_batch, y_batch in tqdm(dataloader):
-                x = x_batch.to(device)
-                y = y_batch.to(device)
-
+            for batch in dataloader:
+                x = batch['image'].to(device)
+                y = batch['moa'].to(device)
+                
                 optimizer.zero_grad()
+                elbo, RE, KL = self.forward(x, y)
+                
+                REs, KLs, ELBOs = REs + [RE.item()], KLs + [KL.item()], ELBOs + [elbo.item()]
 
-                ELBO, reconstruction_error, KL = self.forward(x, y)
-
-                ELBOs.append(ELBO.item())
-                reconstruction_errors.append(reconstruction_error.item())
-                KLs.append(KL.item())
-
-                ELBO.backward()
+                elbo.backward()
                 optimizer.step()
 
             tqdm.write(
-                f"Epoch: {epoch+1}, ELBO: {ELBO.item()}, Reconstruction Error: {reconstruction_error.item()}, Regularizer: {KL.item()}")
+                f"Epoch: {epoch+1}, ELBO: {elbo.item()}, Reconstruction Error: {RE.item()}, Regularizer: {KL.item()}, Variance: {torch.mean(self.var).item()}"
+            )
 
-        return self.encoder, self.decoder, reconstruction_errors, KLs
+        return (
+            self.encoder,
+            self.decoder,
+            REs,
+            KLs,
+            ELBOs
+        )
 
     def test_eval(self, dataloader, save_latent=False, results_folder=''):
         # only wors if len of dataloader is divisible by batch_size
@@ -290,16 +294,17 @@ class Semi_supervised_VAE(nn.Module):
         with torch.no_grad():
             for i, batch in tqdm(enumerate(dataloader)):
                 x = batch["image"].to(device)
+                y = batch["moa"].to(device)
 
                 moa, compound = moa + batch["moa"], compound + batch["compound"]
 
                 if save_latent:
-                    elbo, RE, KL, z = self.forward(x, save_latent=save_latent)
+                    elbo, RE, KL, z = self.forward(x, y, save_latent=save_latent)
                     z = z.cpu().detach().numpy()
                     latent[i*dataloader.batch_size:(i+1)*dataloader.batch_size, :] = z
 
                 else:
-                    elbo, RE, KL = self.forward(x)
+                    elbo, RE, KL = self.forward(x, y)
 
                 REs, KLs, ELBOs = REs + [RE.item()], KLs + [KL.item()], ELBOs + [elbo.item()]
 
@@ -358,13 +363,16 @@ def plot_1_reconstruction(image,
     plt.show()
     plt.close()
 
-def plot_ELBO(REs, KLs, name, results_folder):
+def plot_ELBO(REs, KLs, ELBOs, name, results_folder):
     fig = plt.figure(figsize=(10,6))
     plt.plot(REs, label='Reconstruction Error', color='red', 
              linestyle='--', linewidth=2, alpha=0.5)
     
     plt.plot(KLs, label='Regularizer', color='blue', 
              linestyle='--', linewidth=2, alpha=0.5)
+    
+    plt.plot(ELBOs, label='ELBO', color='black', 
+             linestyle='-', linewidth=4, alpha=0.5)
     plt.legend(fontsize=15)
     plt.title(name, size=26, fontweight='bold')
     plt.xlabel('Epoch',  size=22, fontweight='bold')
@@ -377,40 +385,75 @@ def plot_ELBO(REs, KLs, name, results_folder):
 
 
 if __name__ == "__main__":
-    latent_dim = 50
-    epochs = 5
-    batch_size = 10
+    latent_dim = 300
+    epochs = 100
+    batch_size = 100
 
-    input_dim = 28
-    channels = 1
-    classes = 10
+    classes = 13
 
-    train_size = 30000
+    input_dim = 68
+    channels = 3
+
+    train_size = 1000
     test_size = 1000
 
+    #latent_dim = 10
+    epochs, batch_size, train_size = 2, 10, 10
+
+    torch.backends.cudnn.deterministic = True
+    torch.manual_seed(42)
+    torch.cuda.manual_seed(42)
+    np.random.seed(42)
+
+    from dataloader import BBBC
+
+    main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
+    main_path = "/Users/nikolaj/Fagprojekt/Data/"
+
+
+    exclude_dmso = False
+    shuffle = True
+
+    subset = (train_size, test_size)
+
+    dataset_train = BBBC(folder_path=main_path + "singh_cp_pipeline_singlecell_images",
+                            meta_path=main_path + "metadata.csv",
+                            subset=subset,
+                            test=False,
+                            exclude_dmso=exclude_dmso,
+                            shuffle=shuffle)
+
+    dataset_test = BBBC(folder_path=main_path + "singh_cp_pipeline_singlecell_images",
+                            meta_path=main_path + "metadata.csv",
+                            subset=subset,
+                            test=True,
+                            exclude_dmso=exclude_dmso,
+                            shuffle=shuffle)
+
+
+
+    loader_train = DataLoader(dataset_train, batch_size=batch_size, shuffle=False, drop_last=True)
+    loader_test = DataLoader(dataset_test, batch_size=batch_size, shuffle=False, drop_last=True)
     
     print('initialized dataloaders')
-
-    # X = np.load("image_matrix.npz")["images"][:1000]
-    # X = torch.tensor(X, dtype=torch.float32).permute(0, 3, 1, 2)
 
     VAE = Semi_supervised_VAE(classes=classes, latent_dim=latent_dim,
                             input_dim=input_dim, channels=channels).to(device)
 
-    # print("VAE:")
-    # The summary function from torchsummary.py has been modified to work with the code by changing the following lines (ln 101):
-    # total_input_size = abs(np.prod([np.prod(in_size) for in_size in input_size]) * batch_size * 4. / (1024 ** 2.))
-    # summary(VAE, input_size=[(batch_size, channels, input_dim, input_dim), (batch_size,)])
+    print('initialized VAE')
 
-    encoder_VAE, decoder_VAE, reconstruction_errors, regularizers = VAE.train_VAE(
-        dataloader=Xy_train, epochs=epochs)
+    trained_encoder, trained_decoder, train_REs, train_KLs, train_ELBOs = VAE.train_VAE(
+        dataloader=loader_train, epochs=epochs)
+    
+    print('trained VAE')
 
+    test_REs, test_KLs, test_ELBOs = VAE.test_VAE(dataloader=loader_test)
 
-    results_folder = 'semi_vae/'
+    print('tested VAE')
+
+    results_folder = 'semi_bbbc/'
     if not(os.path.exists(results_folder)):
         os.mkdir(results_folder)
-
-
 
     train_images_folder = results_folder +'train_images/'
 
@@ -423,17 +466,26 @@ if __name__ == "__main__":
         os.mkdir(test_images_folder)
 
 
-    for i, (image, label) in enumerate(Xy_train):
+    for i, (image) in enumerate(loader_train):
         plot_1_reconstruction(image[0], VAE, 'semi_train_' + str(i), latent_dim, channels, input_dim, train_images_folder)
 
-    for i, (image, label) in enumerate(Xy_test):
+    for i, (image) in enumerate(loader_test):
         plot_1_reconstruction(image[0], VAE, 'semi_test_' + str(i), latent_dim, channels, input_dim, test_images_folder)
 
 
+    plot_ELBO(train_REs, train_KLs, 'semi', results_folder)
 
-    plot_ELBO(reconstruction_errors, regularizers, 'semi', results_folder)
+
+    np.savez(results_folder + "train_ELBOs.npz", train_ELBOs=train_ELBOs)
+    np.savez(results_folder + "train_REs.npz", train_REs=train_REs)
+    np.savez(results_folder + "train_KLs.npz", train_KLs=train_KLs)
+    np.savez(results_folder + "test_ELBOs.npz", test_ELBOs=test_ELBOs)
+    np.savez(results_folder + "test_REs.npz", test_REs=test_REs)
+    np.savez(results_folder + "test_KLs.npz", test_KLs=test_KLs)
 
 
+    torch.save(trained_encoder, results_folder + "encoder.pt")
+    torch.save(trained_decoder, results_folder + "decoder.pt")
 
 
 
