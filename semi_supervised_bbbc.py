@@ -392,11 +392,11 @@ if __name__ == "__main__":
     input_dim = 68
     channels = 3
 
-    train_size = 100000
-    test_size = 10000
+    train_size = 100_000
+    test_size = 10_000
 
     # latent_dim = 10
-    epochs, batch_size, train_size = 2, 10, 10
+    #epochs, batch_size, train_size = 2, 10, 10
 
     torch.backends.cudnn.deterministic = True
     torch.manual_seed(42)
@@ -484,8 +484,8 @@ if __name__ == "__main__":
     np.savez(results_folder + "test_KLs.npz", test_KLs=test_KLs)
 
 
-    # torch.save(trained_encoder, results_folder + "encoder.pt")
-    # torch.save(trained_decoder, results_folder + "decoder.pt")
+    torch.save(trained_encoder, results_folder + "encoder.pt")
+    torch.save(trained_decoder, results_folder + "decoder.pt")
 
 
     for i, image in enumerate(loader_train.dataset):
@@ -512,10 +512,10 @@ if __name__ == "__main__":
             
     
     
-    from interpolation import interpolate_between_two_images, interpolate_between_three_images
+    #from interpolation import interpolate_between_two_images, interpolate_between_three_images
     
-    interpolate_between_two_images(VAE, 452305, 475106, main_path, results_folder=results_folder)
-    interpolate_between_three_images(VAE, 452305, 475106, 273028, main_path, results_folder=results_folder)
+    #interpolate_between_two_images(VAE, 452305, 475106, main_path, results_folder=results_folder)
+    #interpolate_between_three_images(VAE, 452305, 475106, 273028, main_path, results_folder=results_folder)
 
 
 
