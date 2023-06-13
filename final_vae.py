@@ -144,7 +144,7 @@ class VAE(nn.Module):
         KLs = []
         ELBOs = []
 
-        # self.initialise()
+        self.initialise()
         self.train()
         for epoch in tqdm(range(epochs)):
             for batch in dataloader:
@@ -338,17 +338,17 @@ if __name__ == "__main__":
 
     #print("VAE:")
     #summary(VAE, input_size=(channels, input_dim, input_dim))
+    results_folder = 'final_vae/'
 
     encoder_VAE, decoder_VAE, train_REs, train_KLs, train_ELBOs = VAE.train_VAE(dataloader=X_train, epochs=epochs)
 
-    test_REs, test_KLs, test_ELBOs = VAE.test_eval(dataloader=X_test, save_latent=True)
+    test_REs, test_KLs, test_ELBOs = VAE.test_eval(dataloader=X_test, save_latent=True, results_folder=results_folder)
 
 
     from interpolation import interpolate_between_two_images, interpolate_between_three_images
 
     # np.savez("latent_space_VAE.npz", latent_space=latent_space.detach().numpy())
-
-    results_folder = 'final_vae/'
+    
     if not(os.path.exists(results_folder)):
         os.mkdir(results_folder)
 
