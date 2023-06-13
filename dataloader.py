@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 import torch
 import os
-from sklearn import preprocessing
+
 
 ### Following dataloader is made by the following guide on 
 # https://pytorch.org/tutorials/beginner/data_loading_tutorial.html
@@ -23,8 +23,8 @@ class BBBC(Dataset):
             # this could also be other errors, but this is the most likely
             raise ValueError("Please change variable 'main_path' to the path of the data folder (should contain metadata.csv, ...)")
         
-        self.labelencoder = preprocessing.LabelEncoder()
-        self.labelencoder.fit(self.meta['moa'])
+        #self.labelencoder = preprocessing.LabelEncoder()
+        #self.labelencoder.fit(self.meta['moa'])
 
         self.col_names = self.meta.columns
         self.folder_path = folder_path
@@ -69,7 +69,8 @@ class BBBC(Dataset):
 
         sample = {"id": id, 
                   "image": torch.tensor(image), 
-                  "moa": self.labelencoder.transform([moa])[0], 
+                  #"moa": self.labelencoder.transform([moa])[0], 
+                  "moa": moa,
                   "compound": compound,
                   }
 
