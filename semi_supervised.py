@@ -244,7 +244,7 @@ class Semi_supervised_VAE(nn.Module):
         optimizer = torch.optim.Adam(parameters, lr=lr)
 
         self.train()
-        self.initialise()
+        #self.initialise()
 
         ELBOs = []
         reconstruction_errors = []
@@ -370,7 +370,7 @@ def plot_ELBO(REs, KLs, name, results_folder):
 
 
 
-latent_dim = 50
+latent_dim = 16
 epochs = 5
 batch_size = 10
 

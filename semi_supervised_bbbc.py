@@ -193,7 +193,7 @@ class Semi_supervised_VAE(nn.Module):
         log_posterior = log_Normal(z, mu, log_var)
         log_prior = log_standard_Normal(z)
         log_like = (1 / (2 * decode_var) * nn.functional.mse_loss(decode_mu, x.flatten(
-            start_dim=1, end_dim=-1), reduction="none"))
+            start_dim=1, end_dim=-1), reduction="none")) + 0.5 * torch.log(decode_var) + 0.5 * torch.log(2 * torch.tensor(np.pi))
 
         reconstruction_error = torch.sum(log_like, dim=-1)
         KL = - torch.sum(log_prior - log_posterior, dim=-1)
@@ -256,13 +256,13 @@ class Semi_supervised_VAE(nn.Module):
         KLs = []
         ELBOs = []
 
-        self.initialise()
+        #self.initialise()
         self.train()
         for epoch in tqdm(range(epochs)):
             for batch in dataloader:
                 x = batch['image'].to(device)
                 y = batch['moa'].to(device)
-                
+
                 optimizer.zero_grad()
                 elbo, RE, KL = self.forward(x, y)
                 
@@ -385,7 +385,7 @@ def plot_ELBO(REs, KLs, ELBOs, name, results_folder):
 
 
 if __name__ == "__main__":
-    latent_dim = 300
+    latent_dim = 250
     epochs = 100
     batch_size = 100
 
@@ -408,7 +408,7 @@ if __name__ == "__main__":
     from dataloader import BBBC
 
     main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
-    main_path = "/Users/nikolaj/Fagprojekt/Data/"
+    # main_path = "/Users/nikolaj/Fagprojekt/Data/"
 
 
     exclude_dmso = False
