@@ -392,10 +392,10 @@ if __name__ == "__main__":
     input_dim = 68
     channels = 3
 
-    train_size = 1000
-    test_size = 1000
+    train_size = 100000
+    test_size = 10000
 
-    #latent_dim = 10
+    # latent_dim = 10
     epochs, batch_size, train_size = 2, 10, 10
 
     torch.backends.cudnn.deterministic = True
@@ -466,14 +466,16 @@ if __name__ == "__main__":
         os.mkdir(test_images_folder)
 
 
-    for i, (image) in enumerate(loader_train):
+    for i in range(10):
+        image = dataset_train[i]
         plot_1_reconstruction(image['image'], VAE, 'semi_train_' + str(i), latent_dim, channels, input_dim, train_images_folder)
 
-    for i, (image) in enumerate(loader_test):
+    for i in range(10):
+        image = dataset_test[i]
         plot_1_reconstruction(image['image'], VAE, 'semi_test_' + str(i), latent_dim, channels, input_dim, test_images_folder)
 
 
-    plot_ELBO(train_REs, train_KLs, 'semi', results_folder)
+    plot_ELBO(train_REs, train_KLs, test_ELBOs, 'semi', results_folder)
 
 
     np.savez(results_folder + "train_ELBOs.npz", train_ELBOs=train_ELBOs)
@@ -484,8 +486,8 @@ if __name__ == "__main__":
     np.savez(results_folder + "test_KLs.npz", test_KLs=test_KLs)
 
 
-    torch.save(trained_encoder, results_folder + "encoder.pt")
-    torch.save(trained_decoder, results_folder + "decoder.pt")
+    # torch.save(trained_encoder, results_folder + "encoder.pt")
+    # torch.save(trained_decoder, results_folder + "decoder.pt")
 
 
 
