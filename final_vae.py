@@ -273,7 +273,6 @@ def plot_ELBO(REs, KLs, ELBOs, name, results_folder):
 
 
 if __name__ == "__main__":
-
     latent_dim = 300
     epochs = 100
     batch_size = 100
@@ -281,8 +280,8 @@ if __name__ == "__main__":
     input_dim = 68
     channels = 3
 
-    train_size = 1000
-    test_size = 1000
+    train_size = 100000
+    test_size = 10000
 
     #latent_dim = 10
     #epochs, batch_size, train_size = 2, 10, 10

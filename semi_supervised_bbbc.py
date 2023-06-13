@@ -176,13 +176,10 @@ class Semi_supervised_VAE(nn.Module):
     def forward(self, x, y, save_latent=False):
         # y_onehot = nn.functional.one_hot(y, num_classes=self.classes).float()
 
-        idx =  y != "DMSO" # "DMSO"
+        idx =  y != 0 # "DMSO"
 
         # y_labelled = y_onehot[idx]
         y_labelled = y[idx]
-        y_labelled = torch.tensor(y_labelled).to(device)
-        idx = torch.tensor(idx).to(device)
-
 
         y_hat = self.classify(x)
         mu, log_var = self.encode(x, y_hat)
@@ -262,7 +259,7 @@ class Semi_supervised_VAE(nn.Module):
         for epoch in tqdm(range(epochs)):
             for batch in dataloader:
                 x = batch['image'].to(device)
-                y = np.array(batch['moa'])
+                y = batch['moa'].to(device)
 
                 optimizer.zero_grad()
                 elbo, RE, KL = self.forward(x, y)
