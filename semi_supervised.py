@@ -404,6 +404,8 @@ plot_ELBO(reconstruction_errors, regularizers, 'semi', results_folder)
 
 
 
+
+
 for i, (image, label) in enumerate(Xy_train):
     plot_1_reconstruction(image[0], VAE, 'semi_train_' + str(i), latent_dim, channels, input_dim, train_images_folder)
 
