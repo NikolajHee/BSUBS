@@ -434,14 +434,13 @@ if __name__ == "__main__":
     loader_test = DataLoader(dataset_test, batch_size=batch_size, shuffle=False, drop_last=True)
     
     print('initialized dataloaders')
-    
-    raise ValueError
 
     VAE = Semi_supervised_VAE(classes=classes, latent_dim=latent_dim,
                             input_dim=input_dim, channels=channels).to(device)
-
     
     print('initialized VAE')
+
+    raise ValueError('stop here')
 
     trained_encoder, trained_decoder, train_REs, train_KLs, train_ELBOs = VAE.train_VAE(
         dataloader=loader_train, epochs=epochs)
