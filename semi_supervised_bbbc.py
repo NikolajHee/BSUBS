@@ -123,8 +123,6 @@ class Semi_supervised_VAE(nn.Module):
         self.alpha = 0.1
         self.middel_dim = 32 # input_dim * input_dim
 
-        self.eps = torch.normal(mean=0, std=torch.ones(self.latent_dim)).to(device)
-
         self.encoder = encoder(input_dim, self.middel_dim, channels)
         self.decoder = decoder(input_dim, self.middel_dim, channels)
         self.classifier = classifier(classes, input_dim, channels)
@@ -140,6 +138,7 @@ class Semi_supervised_VAE(nn.Module):
         return mu, log_var
 
     def reparameterization(self, mu, log_var):
+        self.eps = torch.normal(mean=0, std=torch.ones(self.latent_dim)).to(device)
         return mu + torch.exp(0.5*log_var) * self.eps
 
     def decode(self, z, y_hat):
