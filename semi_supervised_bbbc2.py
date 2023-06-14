@@ -125,7 +125,7 @@ class Semi_supervised_VAE(nn.Module):
         self.input_dim = input_dim
         self.alpha = 0.1
         self.beta = beta
-        self.middel_dim = 1000 # input_dim * input_dim
+        self.middel_dim = 100 # input_dim * input_dim
 
         self.encoder = encoder(input_dim, self.middel_dim, channels)
         self.decoder = decoder(input_dim, self.middel_dim, channels)
