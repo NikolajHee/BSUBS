@@ -475,7 +475,7 @@ if __name__ == "__main__":
     
     print('trained VAE')
 
-    results_folder = 'semi_bbbc/'
+    results_folder = 'semi_bbbc3/'
     if not(os.path.exists(results_folder)):
         os.mkdir(results_folder)
 
