@@ -394,8 +394,8 @@ if __name__ == "__main__":
     train_size = 10_000
     test_size = 2_000
 
-    # latent_dim = 10
-    #epochs, batch_size, train_size = 2, 10, 10
+    #latent_dim = 10
+    #epochs, batch_size, train_size, test_size = 2, 10, 10, 10
 
     torch.backends.cudnn.deterministic = True
     torch.manual_seed(42)
@@ -453,13 +453,18 @@ if __name__ == "__main__":
     
     print('trained VAE')
 
-    test_REs, test_KLs, test_ELBOs = VAE.test_VAE(dataloader=loader_test)
+    results_folder = 'semi_bbbc/'
+    if not(os.path.exists(results_folder)):
+        os.mkdir(results_folder)
+
+
+    test_REs, test_KLs, test_ELBOs = VAE.test_VAE(dataloader=loader_test, 
+                                                     save_latent=True,
+                                                     results_folder=results_folder)
 
     print('tested VAE')
 
-    results_folder = 'semi_bbbc_little/'
-    if not(os.path.exists(results_folder)):
-        os.mkdir(results_folder)
+    
 
     train_images_folder = results_folder +'train_images/'
 
