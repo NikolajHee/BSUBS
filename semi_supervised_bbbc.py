@@ -472,7 +472,7 @@ if __name__ == "__main__":
         os.mkdir(test_images_folder)
 
 
-    plot_ELBO(train_REs, train_KLs, test_ELBOs, 'semi', results_folder)
+    plot_ELBO(train_REs, train_KLs, train_ELBOs, 'semi', results_folder)
 
 
     np.savez(results_folder + "train_ELBOs.npz", train_ELBOs=train_ELBOs)
