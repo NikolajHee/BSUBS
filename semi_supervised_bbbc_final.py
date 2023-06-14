@@ -275,7 +275,6 @@ class Semi_supervised_VAE(nn.Module):
         return (
             self.encoder,
             self.decoder,
-            self.classifier,
             REs,
             KLs,
             ELBOs
@@ -392,8 +391,8 @@ if __name__ == "__main__":
     input_dim = 68
     channels = 3
 
-    train_size = 10_000
-    test_size = 2_000
+    train_size = 100_000
+    test_size = 20_000
 
     #latent_dim = 10
     #epochs, batch_size, train_size, test_size = 2, 10, 10, 10
@@ -449,12 +448,12 @@ if __name__ == "__main__":
     
     print('initialized VAE')
 
-    trained_encoder, trained_decoder, trained_classifier, train_REs, train_KLs, train_ELBOs = VAE.train_VAE(
+    trained_encoder, trained_decoder, train_REs, train_KLs, train_ELBOs = VAE.train_VAE(
         dataloader=loader_train, epochs=epochs)
     
     print('trained VAE')
 
-    results_folder = 'semi_bbbc/'
+    results_folder = 'final_semi_vae/'
     if not(os.path.exists(results_folder)):
         os.mkdir(results_folder)
 
@@ -491,7 +490,6 @@ if __name__ == "__main__":
 
     torch.save(trained_encoder, results_folder + "encoder.pt")
     torch.save(trained_decoder, results_folder + "decoder.pt")
-    torch.save(trained_classifier, results_folder + "classifier.pt")
 
 
     for i, image in enumerate(loader_train.dataset):
