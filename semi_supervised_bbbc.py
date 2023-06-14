@@ -392,11 +392,11 @@ if __name__ == "__main__":
     input_dim = 68
     channels = 3
 
-    train_size = 10_000
-    test_size = 2_000
+    train_size = 100_000
+    test_size = 30_000
 
-    #latent_dim = 10
-    #epochs, batch_size, train_size, test_size = 2, 10, 10, 10
+    # latent_dim = 10
+    # epochs, batch_size, train_size, test_size = 2, 10, 10, 10
 
     torch.backends.cudnn.deterministic = True
     torch.manual_seed(42)
