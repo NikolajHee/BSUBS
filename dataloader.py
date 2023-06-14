@@ -183,3 +183,8 @@ if __name__ == "__main__":
     print(dataset_train.meta[dataset_train.col_names[-1]].value_counts())
     print("Test set:")
     print(dataset_test.meta[dataset_test.col_names[-1]].value_counts())
+
+    for batch in X_train:
+        print(batch['image'].shape)
+        print(batch['moa'].shape)
+        break
