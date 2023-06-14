@@ -113,7 +113,7 @@ class classifier(nn.Module):
 
 
 class Semi_supervised_VAE(nn.Module):
-    def __init__(self, classes, latent_dim, input_dim, channels):
+    def __init__(self, classes, latent_dim, input_dim, channels, beta=1):
         super(Semi_supervised_VAE, self).__init__()
 
         self.latent_dim = latent_dim
@@ -121,7 +121,8 @@ class Semi_supervised_VAE(nn.Module):
         self.channels = channels
         self.input_dim = input_dim
         self.alpha = 0.1
-        self.middel_dim = 32 # input_dim * input_dim
+        self.beta = beta
+        self.middel_dim = 1000 # input_dim * input_dim
 
         self.encoder = encoder(input_dim, self.middel_dim, channels)
         self.decoder = decoder(input_dim, self.middel_dim, channels)
@@ -193,7 +194,7 @@ class Semi_supervised_VAE(nn.Module):
             start_dim=1, end_dim=-1), reduction="none")) + 0.5 * torch.log(decode_var) + 0.5 * torch.log(2 * torch.tensor(np.pi))
 
         reconstruction_error = torch.sum(log_like, dim=-1)
-        KL = - torch.sum(log_prior - log_posterior, dim=-1)
+        KL = - torch.sum(log_prior - log_posterior, dim=-1) * self.beta
 
         y_prob_unlabelled = y_hat[~idx]
         y_prob_labelled = y_hat[idx]
@@ -253,6 +254,7 @@ class Semi_supervised_VAE(nn.Module):
         KLs = []
         ELBOs = []
 
+        self.alpha = 0.1 * dataloader.__len__()
         #self.initialise()
         self.train()
         for epoch in tqdm(range(epochs)):
@@ -392,8 +394,8 @@ if __name__ == "__main__":
     input_dim = 68
     channels = 3
 
-    train_size = 100_000
-    test_size = 30_000
+    train_size = 10_000
+    test_size = 2_000
 
     # latent_dim = 10
     # epochs, batch_size, train_size, test_size = 2, 10, 10, 10
@@ -445,7 +447,8 @@ if __name__ == "__main__":
     print('initialized dataloaders')
 
     VAE = Semi_supervised_VAE(classes=classes, latent_dim=latent_dim,
-                            input_dim=input_dim, channels=channels).to(device)
+                            input_dim=input_dim, channels=channels,
+                            beta=0.1).to(device)
     
     print('initialized VAE')
 
