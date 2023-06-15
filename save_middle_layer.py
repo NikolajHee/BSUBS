@@ -83,7 +83,7 @@ trained_encoder, trained_decoder, trained_classifier, train_REs, train_KLs, trai
                     dataloader=loader_train, epochs=epochs)
 
 
-results_folder = 'save_middle'
+results_folder = 'save_middle/'
 
 if not(os.path.exists(results_folder)):
     os.mkdir(results_folder)
@@ -115,7 +115,7 @@ np.savez(results_folder + "test_KLs.npz", test_KLs=test_KLs)
 
 torch.save(VAE.middel_1, results_folder + "middel_1.pt")
 torch.save(VAE.middel_2, results_folder + "middel_2.pt")
-torch.save(VAE.middel_2, results_folder + "middel_3.pt")
+torch.save(VAE.middel_3, results_folder + "middel_3.pt")
 
 
 plot_ELBO(train_REs, train_KLs, train_ELBOs, name="ELBO-components", results_folder=results_folder)
