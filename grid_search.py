@@ -12,7 +12,7 @@ import sys
 
 index = int(sys.argv[1]) - 1
 
-latent_dims = [150, 200, 250, 300, 350]
+latent_dims = [100, 400]
 
 latent_dim = latent_dims[index] 
 
