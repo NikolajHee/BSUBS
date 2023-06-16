@@ -32,18 +32,19 @@ class classifier(nn.Module):
     
 
 
-def train(model, train_loader, optimizer, criterion, device):
+def train(model, train_loader, optimizer, criterion, device, epoch=100):
     model.train()
     train_loss = 0
-    for batch_idx, batch in tqdm(enumerate(train_loader)):
-        data = batch['image'].to(device)
-        target = batch['moa'].to(device).long()
-        optimizer.zero_grad()
-        output = model(data)
-        loss = criterion(output, target)
-        loss.backward()
-        train_loss += loss.item()
-        optimizer.step()
+    for epoch in tqdm(range(epoch)):
+        for batch_idx, batch in tqdm(enumerate(train_loader)):
+            data = batch['image'].to(device)
+            target = batch['moa'].to(device).long()
+            optimizer.zero_grad()
+            output = model(data)
+            loss = criterion(output, target)
+            loss.backward()
+            train_loss += loss.item()
+            optimizer.step()
     return train_loss / len(train_loader.dataset)
 
 def test(model, test_loader, criterion, device):
@@ -127,4 +128,4 @@ print('accuracy:', accuracy)
 
 # np.save("saveª_pred_SC.npy", save_pred)
 
-torch.save(model, "model_SC.pt")
+torch.save(model, "model_SC2.pt")
