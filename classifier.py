@@ -7,12 +7,13 @@ from sklearn.metrics import confusion_matrix, roc_curve, auc
 import matplotlib.pyplot as plt
 from sklearn.inspection import permutation_importance
 from statsmodels.stats.contingency_tables import mcnemar
+from tqdm import tqdm
 
 #load data
-X_basic = np.load("latent_space_vanilla.npz")["z"]
-y = np.load("latent_space_vanilla.npz")["labels"]
-compound = np.load("latent_space_vanilla.npz")["compound"]
-X_semi = np.load("latent_space_semi.npz")["z"]
+X_basic = np.load("data_classifier/latent_space_vanilla.npz")["z"]
+y = np.load("data_classifier/latent_space_vanilla.npz")["labels"]
+compound = np.load("data_classifier/latent_space_vanilla.npz")["compound"]
+X_semi = np.load("data_classifier/latent_space_semi.npz")["z"]
 
 
 index = np.where(y != 'DMSO')
@@ -57,7 +58,7 @@ real_label = np.array([0])
 feature_sensitivity_basic = []
 feature_sensitivity_semi = []
 
-for Unique_Compound in list_of_compounds:
+for Unique_Compound in tqdm(list_of_compounds):
     print(Unique_Compound)
     #find compound
     test_comp = np.where(compound == Unique_Compound)
