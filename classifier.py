@@ -2,12 +2,10 @@ import torch
 from sklearn.svm import SVC
 import numpy as np
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-import scipy.stats as st
-from sklearn.metrics import confusion_matrix, roc_curve, auc
-import matplotlib.pyplot as plt
 from sklearn.inspection import permutation_importance
 from statsmodels.stats.contingency_tables import mcnemar
 from tqdm import tqdm
+import os
 
 #load data
 X_basic = np.load("data_classifier/latent_space_vanilla.npz")["z"]
@@ -15,6 +13,18 @@ y = np.load("data_classifier/latent_space_vanilla.npz")["labels"]
 compound = np.load("data_classifier/latent_space_vanilla.npz")["compound"]
 X_semi = np.load("data_classifier/latent_space_semi.npz")["z"]
 
+un, indexes = np.unique(y, return_counts=True)
+
+# stratifing the data
+# index = []
+# for i in range(len(un)):
+#     index.append(np.where(y == un[i])[0][:indexes.min()])
+# index = np.hstack(index)
+
+# X_basic = X_basic[index]
+# y = y[index]
+# compound = compound[index]
+# X_semi = X_semi[index]
 
 index = np.where(y != 'DMSO')
 
@@ -87,7 +97,7 @@ for Unique_Compound in tqdm(list_of_compounds):
     print(real_label.shape)
 
     #sensitivity 
-    result_basic = permutation_importance(model_basic, X_basic_test, y_test, n_repeats=10, random_state=0)
+    result_basic = permutation_importance(model_basic, X_basic_test, y_test, n_repeats=5, random_state=0)
     importance_basic = result_basic.importances_mean
     feature_sensitivity_basic.append(importance_basic)
 
@@ -104,7 +114,7 @@ for Unique_Compound in tqdm(list_of_compounds):
     score_semi.append(model_semi.score(X_semi_test, y_test))
 
     #sensitivity 
-    result_semi = permutation_importance(model_semi, X_semi_test, y_test, n_repeats=10, random_state=0)
+    result_semi = permutation_importance(model_semi, X_semi_test, y_test, n_repeats=5, random_state=0)
     importance_semi = result_semi.importances_mean
     feature_sensitivity_semi.append(importance_semi)
 
@@ -148,7 +158,7 @@ score_basic = np.array(score_basic)
 score_b=np.sum(num_data*score_basic)
 
 score_semi=np.array(score_semi)
-score_s=np.sum(num_data*score_basic)
+score_s=np.sum(num_data*score_semi)
 
 print("score for basic" + str(score_b))
 print("score for semi" + str(score_s))
@@ -180,7 +190,7 @@ print("max negative impact " + str(idx_min_semi))
 print("max abs impact " + str(idx_absmax_semi))
 
 #get contigency table and perform mcnemar
-contingency_table = np.zeros(2,2)
+contingency_table = np.zeros((2,2))
 for i in range(len(real_label)):
     if pred_basic[i] == real_label[i] and pred_semi[i] == real_label[i]:
         contingency_table[0,0] += 1
@@ -197,3 +207,15 @@ test_results = mcnemar(contingency_table, exact=True)
 
 print(test_results)
 
+
+# save results
+save_folder = 'classifier/'
+if not os.path.exists(save_folder):
+    os.makedirs(save_folder)
+
+np.save(save_folder + 'score_basic.npy', score_basic)
+np.save(save_folder + 'score_semi.npy', score_semi)
+np.save(save_folder + 'feature_sensitivity_basic.npy', feature_sensitivity_basic)
+np.save(save_folder + 'feature_sensitivity_semi.npy', feature_sensitivity_semi)
+np.save(save_folder + 'contingency_table.npy', contingency_table)
+np.save(save_folder + 'test_results.npy', test_results)
