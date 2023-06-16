@@ -32,7 +32,7 @@ class classifier(nn.Module):
     
 
 
-def train(model, train_loader, optimizer, criterion, device, epoch=100):
+def train(model, train_loader, optimizer, criterion, device, epoch=5):
     model.train()
     train_loss = 0
     for epoch in tqdm(range(epoch)):
