@@ -82,7 +82,7 @@ main_path = "/zhome/70/5/14854/nobackup/deeplearningf22/bbbc021/singlecell/"
 
 
 
-exclude_dmso = False
+exclude_dmso = True
 shuffle = True
 
 subset = (train_size, test_size)

@@ -30,8 +30,8 @@ class BBBC(Dataset):
         self.test = test  
         self.normalize = normalize  
 
-        if exclude_dmso: self.exclude_dmso()
         if shuffle: self.meta = self.meta.sample(frac=1)
+        if exclude_dmso: self.exclude_dmso()
         self.meta = self.meta.iloc[self.train_size:self.train_size + self.test_size, :] if self.test else self.meta.iloc[:self.train_size,:]
         
         
@@ -129,8 +129,9 @@ class get_image_based_on_id(BBBC):
 
         sample = {"id": id, 
                   "image": torch.tensor(image), 
-                  "moa": moa, 
+                  "moa": self.label_encoder(moa), 
                   "compound": compound,
+                  "moa_name": moa,
                   }
 
         return sample
@@ -184,7 +185,79 @@ if __name__ == "__main__":
     print("Test set:")
     print(dataset_test.meta[dataset_test.col_names[-1]].value_counts())
 
-    for batch in X_train:
-        print(batch['image'].shape)
-        print(batch['moa'].shape)
-        break
+    # 157116
+    # 381204
+    # 366536
+    # BAD 117772
+    # NOISE 133205
+    # NOISE 134557
+    # multiple cells 428546
+    # multiple cells 35983
+
+    # save the cells
+    bad_cells = [378294, 424125, 207542, 468092, 468623, 10158, 414951]
+
+    get_image = get_image_based_on_id(main_path + "singh_cp_pipeline_singlecell_images",
+                                      main_path + "metadata.csv",
+                                      normalize='to_1')
+
+    for cell in bad_cells:
+        sample = get_image[cell]
+        plt.imshow(sample['image'].reshape((68,68,3)))
+        plt.title(sample['moa'] + " - " + str(sample['id']))
+        plt.savefig("plots/bad_cells/" + str(cell) + ".png")
+        plt.show()
+
+    for i in range(1000):
+        sample = dataset_test[i+1300]
+        plt.imshow(sample['image'].reshape((68,68,3)))
+        plt.title(sample['moa_name'] + " - " + str(sample['id']))
+        plt.show()
+
+
+# perfect round : 317244 (microtubule stabilizers)
+
+
+# interpolation
+# microtubule destabilizers 200276
+# microtubule destabilizers 136275
+
+# interpolation
+# microtubule stabiliezrs 461163
+# microtubule stabiliezrs 166720
+
+
+# interpolation
+# microtubule stabilizers 308072
+# microtubule stabilizers 328098
+
+# interpolation
+# dmso 322827
+# dmso 219669
+# dmso 473201
+
+# interpolation
+# dmso 219669
+# dmso 358837
+
+# interpolation
+# DNA replication 115811
+
+# interpolation
+# epithelial 23742
+
+
+# interpolation
+# aurora kinase inhibitors 71927
+# aurora kinase inhibitors 246443
+
+# BAD CELL PICTURES
+# 157116
+# 381204
+# 366536
+# BAD 117772
+# NOISE 133205
+# NOISE 134557
+# multiple cells 428546
+# multiple cells 35983
+# 371043
