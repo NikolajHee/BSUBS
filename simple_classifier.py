@@ -50,15 +50,17 @@ def test(model, test_loader, criterion, device):
     model.eval()
     test_loss = 0
     correct = 0
+    save_pred = np.zeros((len(test_loader.dataset)))
     with torch.no_grad():
-        for batch_idx, (batch) in enumerate(test_loader):
+        for i, batch in tqdm(enumerate(test_loader)):
             data = batch['image'].to(device)
             target = batch['moa'].to(device).long()
             output = model(data)
             test_loss += criterion(output, target).item()
-            pred = output.argmax(dim=1, keepdim=True)
-            correct += pred.eq(target.view_as(pred)).sum().item()
-    return test_loss / len(test_loader.dataset), correct / len(test_loader.dataset)
+            pred = output.argmax(dim=1)
+            save_pred[i*batch_size: (i+1)*batch_size] = pred.detach().cpu().numpy()
+            correct += (pred == target).sum().item()
+    return test_loss / len(test_loader.dataset), correct / len(test_loader.dataset), save_pred
 
 
 
@@ -118,8 +120,11 @@ train_loss = train(model, loader_train, optimizer, criterion, device)
 
 print('train_loss:', train_loss)
 
-test_loss, accuracy = test(model, loader_test, criterion, device)
+test_loss, accuracy, save_pred = test(model, loader_test, criterion, device)
 
 print('test_loss:', test_loss)
 print('accuracy:', accuracy)
 
+# np.save("saveª_pred_SC.npy", save_pred)
+
+torch.save(model, "model_SC.pt")
