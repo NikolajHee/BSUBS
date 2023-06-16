@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from sklearn.inspection import permutation_importance
 from statsmodels.stats.contingency_tables import mcnemar
 from tqdm import tqdm
+import os
 
 #load data
 X_basic = np.load("data_classifier/latent_space_vanilla.npz")["z"]
@@ -212,3 +213,14 @@ test_results = mcnemar(contingency_table, exact=True)
 
 print(test_results)
 
+# save results
+save_folder = 'classifier_2/'
+if not os.path.exists(save_folder):
+    os.makedirs(save_folder)
+
+np.save(save_folder + 'score_basic.npy', score_basic)
+np.save(save_folder + 'score_semi.npy', score_semi)
+np.save(save_folder + 'feature_sensitivity_basic.npy', feature_sensitivity_basic)
+np.save(save_folder + 'feature_sensitivity_semi.npy', feature_sensitivity_semi)
+np.save(save_folder + 'contingency_table.npy', contingency_table)
+np.save(save_folder + 'test_results.npy', test_results)
