@@ -8,17 +8,6 @@ from tqdm import tqdm
 import sys
 import os
 
-
-# tod o: seed
-
-
-# todo: latent space
-# todo: decoder/encoder
-# todo: elbo / REs / KLs
-# todo: save test_elbo, test_re, test_kl
-
-# to(device) in unlabbeled_elbo and labelled_elbo
-
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
@@ -389,7 +378,7 @@ if __name__ == "__main__":
     epochs = 100
     batch_size = 100
 
-    classes = 13
+    classes = 12
 
     input_dim = 68
     channels = 3
@@ -457,7 +446,7 @@ if __name__ == "__main__":
     
     print('trained VAE')
 
-    results_folder = 'semi_bbbc/'
+    results_folder = 'test_run/'
     if not(os.path.exists(results_folder)):
         os.mkdir(results_folder)
 
