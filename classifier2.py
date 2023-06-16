@@ -17,6 +17,19 @@ compound = np.load("data_classifier/latent_space_vanilla.npz")["compound"]
 X_semi = np.load("data_classifier/latent_space_semi.npz")["z"]
 
 
+un, indexes = np.unique(y, return_counts=True)
+
+# stratifing the data
+index = []
+for i in range(len(un)):
+    index.append(np.where(y == un[i])[0][:indexes.min()])
+index = np.hstack(index)
+
+X_basic = X_basic[index]
+y = y[index]
+compound = compound[index]
+X_semi = X_semi[index]
+
 
 index = np.where(y != 'DMSO')
 

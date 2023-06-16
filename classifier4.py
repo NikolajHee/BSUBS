@@ -192,7 +192,7 @@ print("max negative impact " + str(idx_min_semi))
 print("max abs impact " + str(idx_absmax_semi))
 
 #get contigency table and perform mcnemar
-contingency_table = np.zeros(2,2)
+contingency_table = np.zeros((2,2))
 for i in range(len(real_label)):
     if pred_basic[i] == real_label[i] and pred_semi[i] == real_label[i]:
         contingency_table[0,0] += 1
