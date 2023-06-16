@@ -166,7 +166,7 @@ class Semi_supervised_VAE(nn.Module):
         # y_onehot = nn.functional.one_hot(y, num_classes=self.classes).float()
 
         idx =  y != 0 # "DMSO"
-
+        y = y - 1
         # y_labelled = y_onehot[idx]
         y_labelled = y[idx]
 
@@ -378,7 +378,7 @@ if __name__ == "__main__":
     epochs = 100
     batch_size = 100
 
-    classes = 12
+    classes = 13
 
     input_dim = 68
     channels = 3
