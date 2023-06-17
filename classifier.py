@@ -209,7 +209,7 @@ print(test_results)
 
 
 # save results
-save_folder = 'classifier/'
+save_folder = 'slow_ass/'
 if not os.path.exists(save_folder):
     os.makedirs(save_folder)
 
