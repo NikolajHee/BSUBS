@@ -15,10 +15,10 @@ X_semi = np.load("data_classifier/latent_space_semi.npz")["z"]
 
 un, indexes = np.unique(y, return_counts=True)
 
-X_basic = X_basic[:20000,:]
-X_semi = X_semi[:20000,:]
-y = y[:20000]
-compound = compound[:20000]
+# X_basic = X_basic[:20000,:]
+# X_semi = X_semi[:20000,:]
+# y = y[:20000]
+# compound = compound[:20000]
 
 
 
@@ -104,7 +104,7 @@ for Unique_Compound in tqdm(list_of_compounds):
     print(real_label.shape)
 
     #sensitivity 
-    result_basic = permutation_importance(model_basic, X_basic_test, y_test, n_repeats=5, random_state=0)
+    result_basic = permutation_importance(model_basic, X_basic_test, y_test, n_repeats=4, random_state=0)
     importance_basic = result_basic.importances_mean
     feature_sensitivity_basic.append(importance_basic)
 
@@ -121,7 +121,7 @@ for Unique_Compound in tqdm(list_of_compounds):
     score_semi.append(model_semi.score(X_semi_test, y_test))
 
     #sensitivity 
-    result_semi = permutation_importance(model_semi, X_semi_test, y_test, n_repeats=5, random_state=0)
+    result_semi = permutation_importance(model_semi, X_semi_test, y_test, n_repeats=4, random_state=0)
     importance_semi = result_semi.importances_mean
     feature_sensitivity_semi.append(importance_semi)
 
