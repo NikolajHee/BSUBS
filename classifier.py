@@ -15,6 +15,13 @@ X_semi = np.load("data_classifier/latent_space_semi.npz")["z"]
 
 un, indexes = np.unique(y, return_counts=True)
 
+X_basic = X_basic[:20000,:]
+X_semi = X_semi[:20000,:]
+y = y[:20000]
+compound = compound[:20000]
+
+
+
 # stratifing the data
 # index = []
 # for i in range(len(un)):
