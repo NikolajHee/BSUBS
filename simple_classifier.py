@@ -114,7 +114,7 @@ loader_test = DataLoader(dataset_test, batch_size=batch_size, shuffle=False, dro
 
 model = classifier(classes=13, input_dim=68, channels=3).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-criterion = nn.NLLLoss()
+criterion = nn.CrossEntropyLoss()
 
 
 train_loss = train(model, loader_train, optimizer, criterion, device)
